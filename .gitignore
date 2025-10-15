@@ -1,0 +1,40 @@
+.DS_Store
+/DerivedData/
+/build/
+
+# Documentation
+IMPLEMENTATION-PLAN.MD
+PRD.MD
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# Swift Package Manager
+.swiftpm/
+Packages/
+Package.resolved
+
+# CocoaPods / Carthage (not used yet, but ignore by default)
+Pods/
+Carthage/
+Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# App artifacts
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# Secrets / configs
+*.env
+*.xcconfig
+Secrets/
+
