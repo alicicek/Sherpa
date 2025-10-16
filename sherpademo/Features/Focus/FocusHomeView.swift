@@ -12,6 +12,7 @@ struct FocusHomeView: View {
     @StateObject private var viewModel = FocusTimerViewModel()
     @EnvironmentObject private var xpStore: XPStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
 
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var confettiTrigger: Int = 0
@@ -31,10 +32,11 @@ struct FocusHomeView: View {
                     timerCard
                     sessionProgressCard
                     controlsSection
-                    Spacer(minLength: 0)
+                    Spacer(minLength: safeAreaInsets.bottom)
                 }
                 .padding(.horizontal, DesignTokens.Spacing.lg)
-                .padding(.vertical, DesignTokens.Spacing.xl)
+                .padding(.top, safeAreaInsets.top + DesignTokens.Spacing.xl)
+                .padding(.bottom, safeAreaInsets.bottom + DesignTokens.Spacing.lg)
 
                 FocusConfettiView(trigger: confettiTrigger)
 
