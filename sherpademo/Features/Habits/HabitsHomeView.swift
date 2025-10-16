@@ -7,12 +7,34 @@
 
 import SwiftData
 import SwiftUI
+import UIKit
+
+private struct DayCompletionSnapshot {
+    let progress: Double
+    let isComplete: Bool
+    let hasEligibleItems: Bool
+
+    static let empty = DayCompletionSnapshot(progress: 0, isComplete: false, hasEligibleItems: false)
+}
+
+private struct HabitTileProfile {
+    let goal: Double
+    let step: Double
+    let unit: String
+    let subtitle: String
+    let icon: String
+    let accent: Color
+    let background: Color
+}
 
 struct HabitsHomeView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate: Date = Date().startOfDay
     @State private var showingAddSheet = false
     @State private var skipNoteTarget: HabitInstance?
+    @State private var calendarWindowStart: Date
+    @State private var habitProgressValues: [PersistentIdentifier: Double] = [:]
+    @State private var habitTileProfiles: [PersistentIdentifier: HabitTileProfile] = [:]
 
     private let calendarSpan: Int = 14
 
@@ -28,6 +50,7 @@ struct HabitsHomeView: View {
             },
             sort: [SortDescriptor(\HabitInstance.date, order: .forward)]
         )
+        _calendarWindowStart = State(initialValue: now.adding(days: -calendarSpan))
     }
 
     var body: some View {
@@ -38,17 +61,17 @@ struct HabitsHomeView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: DesignTokens.Spacing.xl) {
+                        CalendarStripView(
+                            dates: calendarDates,
+                            dayProgress: dayCompletionSnapshots,
+                            selectedDate: $selectedDate
+                        )
+                        .padding(.horizontal, -DesignTokens.Spacing.lg)
+
                         HabitsHeroCard(
                             date: selectedDate,
                             leagueName: leagueTitle,
-                            xpValue: totalXP,
-                            message: motivationMessage
-                        )
-
-                        CalendarStripView(
-                            dates: calendarDates,
-                            selectedDate: $selectedDate,
-                            daySummaries: daySummaries
+                            xpValue: totalXP
                         )
 
                         if todaysItems.isEmpty {
@@ -56,21 +79,29 @@ struct HabitsHomeView: View {
                         } else {
                             VStack(spacing: DesignTokens.Spacing.md) {
                                 ForEach(todaysItems.enumerated().map({ $0 }), id: \.element.id) { index, instance in
-                                    RoutineCard(
-                                        instance: instance,
-                                        colorIndex: index,
-                                        qualifiesForStreak: daySummaries[selectedDate.startOfDay] ?? false,
-                                        onToggleComplete: {
-                                            let newStatus: CompletionState = instance.status == .completed ? .pending : .completed
-                                            update(instance: instance, status: newStatus, note: instance.note)
-                                        },
-                                        onSkip: {
-                                            update(instance: instance, status: .skipped, note: nil)
-                                        },
-                                        onSkipWithNote: {
+                                    let profile = habitProfile(for: instance, colorIndex: index)
+                                    let model = tileModel(for: instance, profile: profile)
+                                    HabitTile(
+                                        model: model,
+                                        progress: progressBinding(for: instance, profile: profile)
+                                    ) { newValue in
+                                        handleProgressChange(for: instance, profile: profile, newValue: newValue)
+                                    }
+                                    .contextMenu {
+                                        Button("Reset progress", role: .destructive) {
+                                            resetProgress(for: instance, profile: profile)
+                                        }
+
+                                        Divider()
+
+                                        Button("Skip today", role: .destructive) {
+                                            skip(instance: instance, profile: profile)
+                                        }
+
+                                        Button("Skip with note") {
                                             skipNoteTarget = instance
                                         }
-                                    )
+                                    }
                                 }
                             }
                         }
@@ -84,9 +115,11 @@ struct HabitsHomeView: View {
                 }
             }
             .task {
+                adjustCalendarWindowIfNeeded(for: selectedDate)
                 await ensureScheduleForVisibleRange()
             }
             .onChange(of: selectedDate) { newValue in
+                adjustCalendarWindowIfNeeded(for: newValue)
                 _Concurrency.Task {
                     await ensureScheduleForVisibleRange(centeredOn: newValue)
                 }
@@ -139,26 +172,6 @@ private extension HabitsHomeView {
         return Double(completedCount) / Double(eligibleHabitCount)
     }
 
-    var motivationMessage: String {
-        if eligibleHabitCount == 0 {
-            return "Take a moment to breathe or plan ahead in the calendar."
-        }
-
-        if daySummaries[selectedDate.startOfDay] == true {
-            return "Streak secured – everything else is bonus sparkle."
-        }
-
-        if completionProgress >= 0.4 {
-            return "One more habit locks in today's streak."
-        }
-
-        if completedCount == 0 {
-            return "Start with the easiest win and keep the energy playful."
-        }
-
-        return "Sherpa Goat is cheering for a couple more taps."
-    }
-
     var leagueTitle: String {
         switch completionProgress {
         case 0.75...:
@@ -166,7 +179,7 @@ private extension HabitsHomeView {
         case 0.4...:
             return "Hilltop League"
         default:
-            return "Trailhead League"
+            return "Hilltop League"
         }
     }
 
@@ -178,13 +191,42 @@ private extension HabitsHomeView {
     }
 
     var calendarDates: [Date] {
-        let base = selectedDate
-        return (-3...3).map { base.adding(days: $0) }
+        let start = calendarWindowStart
+        return (0...(calendarSpan * 2)).map { offset in
+            start.adding(days: offset)
+        }
     }
 
     var daySummaries: [Date: Bool] {
         Dictionary(grouping: instances) { $0.date.startOfDay }
             .mapValues { StreakCalculator.qualifiesForStreak(instances: $0) }
+    }
+
+    var dayCompletionSnapshots: [Date: DayCompletionSnapshot] {
+        let grouped = Dictionary(grouping: instances) { $0.date.startOfDay }
+        var snapshots: [Date: DayCompletionSnapshot] = [:]
+
+        for (date, items) in grouped {
+            let eligibleItems = items.filter { $0.status != .skippedWithNote }
+            let completedCount = eligibleItems.filter { $0.status == .completed }.count
+            let eligibleCount = eligibleItems.count
+
+            guard eligibleCount > 0 else {
+                snapshots[date] = DayCompletionSnapshot(progress: 0, isComplete: false, hasEligibleItems: false)
+                continue
+            }
+
+            let threshold = max(1, Int(ceil(Double(eligibleCount) * 0.4)))
+            let progress = min(Double(completedCount) / Double(threshold), 1)
+            let snapshot = DayCompletionSnapshot(
+                progress: progress,
+                isComplete: completedCount >= threshold,
+                hasEligibleItems: true
+            )
+            snapshots[date] = snapshot
+        }
+
+        return snapshots
     }
 }
 
@@ -219,6 +261,164 @@ private extension HabitsHomeView {
         }
     }
 
+    func adjustCalendarWindowIfNeeded(for date: Date) {
+        let normalizedDate = date.startOfDay
+        let currentStart = calendarWindowStart
+        let currentEnd = currentStart.adding(days: calendarSpan * 2)
+
+        let leadingThreshold = currentStart.adding(days: 3)
+        let trailingThreshold = currentEnd.adding(days: -3)
+
+        if normalizedDate <= leadingThreshold {
+            calendarWindowStart = normalizedDate.adding(days: -calendarSpan)
+        } else if normalizedDate >= trailingThreshold {
+            calendarWindowStart = normalizedDate.adding(days: -calendarSpan)
+        }
+    }
+
+    func habitProfile(for instance: HabitInstance, colorIndex: Int) -> HabitTileProfile {
+        let identifier = instance.persistentModelID
+        if let cached = habitTileProfiles[identifier] {
+            return cached
+        }
+
+        let palette = DesignTokens.cardPalettes[colorIndex % DesignTokens.cardPalettes.count]
+        let accent = palette.first ?? DesignTokens.Colors.primary
+        let background = (palette.dropFirst().first ?? accent).opacity(0.18)
+
+        var goal: Double = instance.isHabit ? 4 : 1
+        var unit: String = instance.isHabit ? "reps" : "tasks"
+        var subtitle: String = instance.isHabit ? "Every day" : "Task"
+        var icon: String = instance.isHabit ? "🧗" : "📝"
+
+        let lowercasedName = instance.displayName.lowercased()
+        if lowercasedName.contains("water") {
+            goal = 3000
+            unit = "ml"
+            icon = "💧"
+            subtitle = "Hydration"
+        } else if lowercasedName.contains("protein") {
+            goal = 400
+            unit = "g"
+            icon = "🍗"
+            subtitle = "Nutrition"
+        } else if lowercasedName.contains("walk") || lowercasedName.contains("steps") {
+            goal = 8000
+            unit = "steps"
+            icon = "🚶"
+            subtitle = "Movement"
+        } else if lowercasedName.contains("meditat") {
+            goal = 20
+            unit = "min"
+            icon = "🧘"
+            subtitle = "Mindfulness"
+        }
+
+        let step = AdaptiveStepCalculator.stepSize(for: goal)
+
+        let profile = HabitTileProfile(
+            goal: goal,
+            step: step,
+            unit: unit,
+            subtitle: subtitle,
+            icon: icon,
+            accent: accent,
+            background: background
+        )
+
+        habitTileProfiles[identifier] = profile
+        return profile
+    }
+
+    func progressBinding(for instance: HabitInstance, profile: HabitTileProfile) -> Binding<Double> {
+        let identifier = instance.persistentModelID
+        if habitProgressValues[identifier] == nil {
+            let initialValue = instance.status == .completed ? profile.goal : 0
+            habitProgressValues[identifier] = initialValue
+        }
+
+        return Binding<Double>(
+            get: {
+                habitProgressValues[identifier] ?? 0
+            },
+            set: { newValue in
+                habitProgressValues[identifier] = max(0, min(profile.goal, newValue))
+            }
+        )
+    }
+
+    func handleProgressChange(
+        for instance: HabitInstance,
+        profile: HabitTileProfile,
+        newValue: Double
+    ) {
+        let identifier = instance.persistentModelID
+        let clamped = max(0, min(profile.goal, newValue))
+        habitProgressValues[identifier] = clamped
+
+        let shouldBeCompleted = clamped >= profile.goal - 0.0001
+        if shouldBeCompleted {
+            if instance.status != .completed {
+                update(instance: instance, status: .completed, note: instance.note)
+            }
+        } else if instance.status == .completed {
+            update(instance: instance, status: .pending, note: instance.note)
+        }
+
+        saveProgress(for: instance, progress: clamped, profile: profile)
+    }
+
+    func saveProgress(for instance: HabitInstance, progress: Double, profile: HabitTileProfile) {
+        // Placeholder persistence hook. Replace with Supabase integration.
+        let percent = profile.goal > 0 ? Int((progress / profile.goal) * 100) : 0
+        print("Saved progress for \(instance.displayName): \(Int(progress))/\(Int(profile.goal)) \(profile.unit) (\(percent)% done)")
+    }
+
+    func resetProgress(for instance: HabitInstance, profile: HabitTileProfile) {
+        let identifier = instance.persistentModelID
+        habitProgressValues[identifier] = 0
+        handleProgressChange(for: instance, profile: profile, newValue: 0)
+    }
+
+    func skip(instance: HabitInstance, profile: HabitTileProfile) {
+        let identifier = instance.persistentModelID
+        habitProgressValues[identifier] = 0
+        update(instance: instance, status: .skipped, note: nil)
+        saveProgress(for: instance, progress: 0, profile: profile)
+    }
+
+    func tileModel(for instance: HabitInstance, profile: HabitTileProfile) -> HabitTileModel {
+        HabitTileModel(
+            title: instance.displayName,
+            subtitle: profile.subtitle,
+            icon: profile.icon,
+            goal: profile.goal,
+            unit: profile.unit,
+            step: profile.step,
+            accentColor: profile.accent,
+            backgroundColor: profile.background
+        )
+    }
+
+}
+
+private enum AdaptiveStepCalculator {
+    static func stepSize(for goal: Double) -> Double {
+        switch goal {
+        case ..<20:
+            return 1
+        case ..<200:
+            return 5
+        case ..<1000:
+            return 10
+        case ..<5000:
+            return 50
+        case ..<10000:
+            return 100
+        default:
+            return 250
+        }
+    }
 }
 
 // MARK: - Header
@@ -227,19 +427,28 @@ private struct HabitsHeroCard: View {
     let date: Date
     let leagueName: String
     let xpValue: Int
-    let message: String
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            MountainIllustration()
-                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous)
-                        .stroke(Color.white.opacity(0.7), lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.06), radius: 16, y: 10)
+        let cardShape = RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous)
 
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+        ZStack(alignment: .topLeading) {
+            Image("HabitsHeroIllustration")
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+                .accessibilityHidden(true)
+
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.85),
+                    Color.white.opacity(0.0)
+                ],
+                startPoint: .top,
+                endPoint: .center
+            )
+
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
                 Text(leagueName)
                     .font(.system(size: 30, weight: .heavy, design: .rounded))
                     .foregroundStyle(Color.sherpaTextPrimary)
@@ -251,139 +460,16 @@ private struct HabitsHeroCard: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.sherpaTextPrimary)
                 }
-
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                    Text(date.formatted(.dateTime.weekday(.wide)))
-                        .font(.system(.callout, design: .rounded).weight(.bold))
-                        .foregroundStyle(Color.sherpaTextPrimary)
-                    Text(message)
-                        .font(DesignTokens.Fonts.body())
-                        .foregroundStyle(Color.sherpaTextSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
             }
             .padding(DesignTokens.Spacing.xl)
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            SherpaMascotPlaceholder()
-                .frame(width: 120, height: 140)
-                .offset(x: -DesignTokens.Spacing.lg, y: DesignTokens.Spacing.md)
         }
-        .frame(maxWidth: .infinity)
         .frame(height: 240)
-        .accessibilityElement(children: .contain)
+        .frame(maxWidth: .infinity)
+        .clipShape(cardShape)
+        .overlay(cardShape.stroke(Color.white.opacity(0.3), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.06), radius: 16, y: 10)
+        .accessibilityElement(children: .combine)
         .accessibilityLabel("\(leagueName) with \(xpValue) XP on \(date.formatted(date: .complete, time: .omitted))")
-    }
-}
-
-private struct MountainIllustration: View {
-    var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let height = proxy.size.height
-
-            ZStack {
-                LinearGradient(
-                    colors: [DesignTokens.Colors.primary.opacity(0.25), DesignTokens.Colors.accentMint.opacity(0.4), Color.white],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-
-                VStack(spacing: 0) {
-                    Spacer()
-                    ZStack {
-                        RoundedRectangle(cornerRadius: height * 0.25, style: .continuous)
-                            .fill(DesignTokens.Colors.accentMint.opacity(0.9))
-                            .frame(width: width * 1.1, height: height * 0.75)
-                            .offset(y: height * 0.2)
-
-                        RoundedRectangle(cornerRadius: height * 0.22, style: .continuous)
-                            .fill(DesignTokens.Colors.primary)
-                            .frame(width: width * 1.05, height: height * 0.7)
-                            .overlay(
-                                Path { path in
-                                    let baseY = height * 0.55
-                                    path.move(to: CGPoint(x: width * 0.05, y: baseY))
-                                    path.addQuadCurve(
-                                        to: CGPoint(x: width * 0.45, y: height * 0.2),
-                                        control: CGPoint(x: width * 0.2, y: height * 0.3)
-                                    )
-                                    path.addQuadCurve(
-                                        to: CGPoint(x: width * 0.95, y: baseY + height * 0.05),
-                                        control: CGPoint(x: width * 0.75, y: height * 0.25)
-                                    )
-                                }
-                                .stroke(Color.white.opacity(0.35), style: StrokeStyle(lineWidth: max(4, height * 0.03), lineCap: .round))
-                            )
-                    }
-                    .padding(.bottom, -height * 0.1)
-                }
-            }
-        }
-    }
-}
-
-private struct SherpaMascotPlaceholder: View {
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(Color.white.opacity(0.85))
-                .shadow(color: Color.black.opacity(0.1), radius: 12, y: 8)
-
-            VStack(spacing: DesignTokens.Spacing.sm) {
-                HStack(spacing: DesignTokens.Spacing.xs) {
-                    Horn()
-                    Horn(flip: true)
-                }
-                .frame(width: 80)
-
-                Circle()
-                    .fill(DesignTokens.Colors.accentMint)
-                    .frame(width: 80, height: 80)
-                    .overlay(
-                        VStack(spacing: DesignTokens.Spacing.xs) {
-                            HStack(spacing: DesignTokens.Spacing.sm) {
-                                Eye()
-                                Eye()
-                            }
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(Color.sherpaTextPrimary)
-                                .frame(width: 22, height: 6)
-                        }
-                    )
-
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(DesignTokens.Colors.primary)
-                    .frame(width: 70, height: 26)
-            }
-            .padding(DesignTokens.Spacing.md)
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-
-    private struct Horn: View {
-        var flip: Bool = false
-
-        var body: some View {
-            Capsule(style: .continuous)
-                .fill(DesignTokens.Colors.accentOrange.opacity(0.8))
-                .frame(width: 22, height: 48)
-                .rotationEffect(.degrees(flip ? 25 : -25))
-        }
-    }
-
-    private struct Eye: View {
-        var body: some View {
-            ZStack {
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 18, height: 18)
-                Circle()
-                    .fill(Color.sherpaTextPrimary)
-                    .frame(width: 8, height: 8)
-            }
-        }
     }
 }
 
@@ -391,43 +477,106 @@ private struct SherpaMascotPlaceholder: View {
 
 private struct CalendarStripView: View {
     let dates: [Date]
+    let dayProgress: [Date: DayCompletionSnapshot]
     @Binding var selectedDate: Date
-    let daySummaries: [Date: Bool]
 
     private let calendar = Calendar.current
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var hasPerformedInitialScroll = false
+    @State private var lastSelectedDate: Date = Date().startOfDay
+    private let defaultAnchor = UnitPoint(x: 0.78, y: 0.5)
+    private let pastAnchor = UnitPoint(x: 0.82, y: 0.5)
+    private let futureAnchor = UnitPoint(x: 0.18, y: 0.5)
 
     var body: some View {
-        SherpaCard(
-            backgroundStyle: .solid(Color.white),
-            strokeColor: Color.white,
-            strokeOpacity: 0.7,
-            padding: DesignTokens.Spacing.lg,
-            shadowColor: Color.black.opacity(0.05)
-        ) {
+        ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DesignTokens.Spacing.md) {
+                LazyHStack(spacing: DesignTokens.Spacing.sm) {
                     ForEach(dates, id: \.self) { date in
-                        let isSelected = calendar.isDate(date, inSameDayAs: selectedDate)
-                        let qualifies = daySummaries[date.startOfDay] ?? false
+                        let normalizedDate = date.startOfDay
+                        let isSelected = calendar.isDate(normalizedDate, inSameDayAs: selectedDate)
+
                         CalendarStripCell(
-                            date: date,
+                            date: normalizedDate,
                             isSelected: isSelected,
-                            qualifies: qualifies
+                            snapshot: dayProgress[normalizedDate] ?? .empty
                         )
+                        .id(normalizedDate)
+                        .contentShape(Rectangle())
                         .onTapGesture {
-                            if reduceMotion {
-                                selectedDate = date.startOfDay
-                            } else {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                    selectedDate = date.startOfDay
-                                }
-                            }
+                            selectedDate = normalizedDate
                         }
                     }
                 }
-                .padding(.horizontal, DesignTokens.Spacing.sm)
+                .padding(.horizontal, 0)
+                .padding(.vertical, DesignTokens.Spacing.sm)
             }
+            .onAppear {
+                guard !hasPerformedInitialScroll else { return }
+                hasPerformedInitialScroll = true
+                lastSelectedDate = selectedDate
+                scrollToSelected(proxy: proxy, anchor: defaultAnchor, animated: false)
+            }
+            .onChange(of: selectedDate) { newDate in
+                let anchor = anchor(for: newDate, previous: lastSelectedDate)
+                lastSelectedDate = newDate
+                scrollToSelected(proxy: proxy, anchor: anchor)
+            }
+        }
+    }
+
+    private func scrollToSelected(
+        proxy: ScrollViewProxy,
+        anchor: UnitPoint,
+        animated: Bool = true
+    ) {
+        let performScroll = {
+            proxy.scrollTo(selectedDate.startOfDay, anchor: anchor)
+        }
+
+        let scrollAction = {
+            if reduceMotion || !animated {
+                performScroll()
+            } else {
+                let animation = Animation.spring(response: 0.45, dampingFraction: 0.85, blendDuration: 0.15)
+                withAnimation(animation) {
+                    performScroll()
+                }
+            }
+        }
+
+        DispatchQueue.main.async(execute: scrollAction)
+    }
+
+    private func anchor(for newDate: Date, previous oldDate: Date) -> UnitPoint {
+        let normalizedDate = newDate.startOfDay
+
+        guard let index = dates.firstIndex(of: normalizedDate) else {
+            return defaultAnchor
+        }
+
+        let total = dates.count
+        if total <= 1 {
+            return defaultAnchor
+        }
+
+        if index <= 1 {
+            return UnitPoint(x: 0.12, y: 0.5)
+        }
+
+        if index >= total - 2 {
+            return UnitPoint(x: 0.88, y: 0.5)
+        }
+
+        let comparisonResult = calendar.compare(newDate, to: oldDate, toGranularity: .day)
+
+        switch comparisonResult {
+        case .orderedAscending:
+            return pastAnchor
+        case .orderedDescending:
+            return futureAnchor
+        default:
+            return defaultAnchor
         }
     }
 }
@@ -435,299 +584,436 @@ private struct CalendarStripView: View {
 private struct CalendarStripCell: View {
     let date: Date
     let isSelected: Bool
-    let qualifies: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let snapshot: DayCompletionSnapshot
+
+    private let calendar = Calendar.current
 
     var body: some View {
-        VStack(spacing: DesignTokens.Spacing.sm) {
+        let normalizedProgress = max(0, min(snapshot.progress, 1))
+        let isCompleteDay = snapshot.isComplete
+        let hasEligibleItems = snapshot.hasEligibleItems
+
+        let futureOpacityScale: Double = isFutureDay ? 0.55 : 0.8
+        let weekdayOpacity = isSelected || isCompleteDay ? 0.95 : (isFutureDay ? 0.5 : 0.65)
+
+        let circleFill: Color = {
+            if isCompleteDay { return DesignTokens.Colors.primary }
+            if isSelected { return Color.sherpaTextPrimary.opacity(0.12) }
+            return Color.clear
+        }()
+
+        let circleStroke = Color.sherpaTextPrimary.opacity(hasEligibleItems ? 0.18 : 0.08)
+        let progressColor = isCompleteDay ? Color.white.opacity(0.9) : DesignTokens.Colors.primary
+
+        let dayTextColor: Color = {
+            if isCompleteDay { return .white }
+            if isSelected { return Color.sherpaTextPrimary }
+            return Color.sherpaTextPrimary.opacity(futureOpacityScale)
+        }()
+
+        VStack(spacing: 6) {
             Text(weekday)
-                .font(.system(.caption, design: .rounded).weight(isSelected ? .heavy : .medium))
-                .foregroundStyle(isSelected ? Color.white : Color.sherpaTextSecondary)
-                .padding(.horizontal, DesignTokens.Spacing.sm)
-                .padding(.vertical, DesignTokens.Spacing.xs)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(isSelected ? DesignTokens.Colors.primary : Color.clear)
-                )
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.sherpaTextPrimary.opacity(weekdayOpacity))
 
-            Text(dayString)
-                .font(.system(size: 20, weight: .heavy, design: .rounded))
-                .foregroundStyle(Color.sherpaTextPrimary)
+            ZStack {
+                Circle()
+                    .fill(circleFill)
 
-            Circle()
-                .fill(qualifies ? DesignTokens.Colors.accentGold : Color.sherpaTextSecondary.opacity(0.2))
-                .frame(width: qualifies ? 10 : 6, height: qualifies ? 10 : 6)
-                .opacity(qualifies ? 1 : 0.6)
+                Circle()
+                    .stroke(circleStroke, lineWidth: 1.25)
+                    .opacity(hasEligibleItems ? 1 : 0.4)
+
+                Circle()
+                    .trim(from: 0, to: CGFloat(normalizedProgress))
+                    .stroke(progressColor, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .opacity(hasEligibleItems ? 1 : 0)
+
+                Text(dayString)
+                    .font(.system(size: 18, weight: .heavy, design: .rounded))
+                    .foregroundStyle(dayTextColor)
+            }
+            .frame(width: 44, height: 44)
         }
-        .frame(width: 58)
         .padding(.vertical, DesignTokens.Spacing.xs)
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
-                .fill(isSelected ? Color.white.opacity(0.65) : Color.clear)
-        )
-        .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.7), value: isSelected)
+        .padding(.horizontal, DesignTokens.Spacing.sm)
+        .frame(minWidth: 56)
+        .opacity(isFutureDay && !isSelected && !isCompleteDay ? 0.9 : 1)
     }
 
     private var weekday: String {
-        date.formatted(.dateTime.weekday(.short)).uppercased()
+        let weekdayIndex = calendar.component(.weekday, from: date) - 1
+        let symbols = calendar.shortWeekdaySymbols
+        guard symbols.indices.contains(weekdayIndex) else { return "" }
+        let symbol = symbols[weekdayIndex]
+        return symbol.count > 2 ? String(symbol.prefix(2)) : symbol
     }
 
     private var dayString: String {
-        date.formatted(.dateTime.day())
+        String(calendar.component(.day, from: date))
+    }
+
+    private var isFutureDay: Bool {
+        date > Date().startOfDay
     }
 }
 
-// MARK: - Routine Cards
+// MARK: - Habit Tiles
 
-private struct RoutineCard: View {
-    let instance: HabitInstance
-    let colorIndex: Int
-    let qualifiesForStreak: Bool
-    let onToggleComplete: () -> Void
-    let onSkip: () -> Void
-    let onSkipWithNote: () -> Void
+struct HabitTileModel {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let goal: Double
+    let unit: String
+    let step: Double
+    let accentColor: Color
+    let backgroundColor: Color
+}
 
-    private static let relativeFormatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .short
+struct HabitTile: View {
+    let model: HabitTileModel
+    @Binding var progress: Double
+    var onProgressChange: (Double) -> Void
+
+    @State private var showCompletion: Bool = false
+    @State private var isDragging: Bool = false
+    @State private var hasCelebratedCompletion = false
+    @State private var dragStartProgress: Double = 0
+    @State private var displayProgress: Double = 0
+
+    private let lightFeedback = UIImpactFeedbackGenerator(style: .light)
+    private let mediumFeedback = UIImpactFeedbackGenerator(style: .medium)
+    private let rigidFeedback = UIImpactFeedbackGenerator(style: .rigid)
+    private let notificationFeedback = UINotificationFeedbackGenerator()
+
+    private let tileHeight: CGFloat = 68
+
+    private var progressRatio: Double {
+        guard model.goal > 0 else { return 0 }
+        return min(max(progress / model.goal, 0), 1)
+    }
+
+    private var displayRatio: Double {
+        guard model.goal > 0 else { return 0 }
+        return min(max(displayProgress / model.goal, 0), 1)
+    }
+
+    private var progressText: String {
+        let current = HabitTile.numberFormatter.string(from: NSNumber(value: progress)) ?? "0"
+        let goal = HabitTile.numberFormatter.string(from: NSNumber(value: model.goal)) ?? "0"
+        let unit = model.unit.isEmpty ? "" : " \(model.unit)"
+        return "\(current)/\(goal)\(unit)"
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let cornerRadius = DesignTokens.CornerRadius.small
+            let fillWidth = max(width * displayRatio, 0)
+
+            let isComplete = progressRatio >= 1 - 0.0001
+            let fillOpacity = (isDragging || isComplete) ? 0.48 : 0.32
+            let iconBackground = model.accentColor.opacity(0.2 + (displayRatio * 0.15))
+
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(model.backgroundColor)
+
+                if fillWidth > 0 {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(model.accentColor.opacity(fillOpacity))
+                        .frame(width: fillWidth)
+                        .animation(.easeOut(duration: 0.18), value: displayRatio)
+                }
+
+                HStack(spacing: DesignTokens.Spacing.md) {
+                    Text(model.icon)
+                        .font(.system(size: 26))
+                        .frame(width: 44, height: 44)
+                        .background(iconBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(model.title)
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color.sherpaTextPrimary)
+                            .lineLimit(1)
+
+                        Text(model.subtitle)
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color.sherpaTextSecondary)
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: DesignTokens.Spacing.md)
+
+                    Text(progressText)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color.sherpaTextPrimary.opacity(0.85))
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, DesignTokens.Spacing.md)
+            }
+            .frame(height: tileHeight)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(alignment: .topTrailing) {
+                if showCompletion {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundStyle(model.accentColor)
+                        .padding(8)
+                        .transition(.scale(scale: 0.6, anchor: .topTrailing).combined(with: .opacity))
+                }
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(model.accentColor.opacity(isDragging ? 0.22 : 0.14), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(isDragging ? 0.08 : 0.05), radius: isDragging ? 10 : 8, y: isDragging ? 6 : 4)
+            .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .gesture(dragGesture(totalWidth: width))
+        }
+        .frame(height: tileHeight)
+        .onAppear {
+            displayProgress = progress
+            handleCompletionState(for: progress)
+        }
+        .onChange(of: progress) { newValue in
+            if isDragging == false {
+                withAnimation(.easeOut(duration: 0.18)) {
+                    displayProgress = newValue
+                }
+            }
+            handleCompletionState(for: newValue)
+        }
+    }
+
+    private func dragGesture(totalWidth: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 12, coordinateSpace: .local)
+            .onChanged { value in
+                if !isDragging {
+                    let horizontalMagnitude = abs(value.translation.width)
+                    let verticalMagnitude = abs(value.translation.height)
+                    guard horizontalMagnitude > verticalMagnitude, horizontalMagnitude > 6 else {
+                        return
+                    }
+                    isDragging = true
+                    dragStartProgress = progress
+                    hasCelebratedCompletion = progress >= model.goal - 0.0001
+                }
+
+                guard isDragging else { return }
+
+                let deltaRatio = Double(value.translation.width / max(totalWidth, 1))
+                let target = dragStartProgress + (deltaRatio * model.goal)
+                displayProgress = max(0, min(model.goal, target))
+                updateProgress(to: target)
+            }
+            .onEnded { value in
+                guard isDragging else { return }
+
+                let deltaRatio = Double(value.translation.width / max(totalWidth, 1))
+                let predictedRatio = Double(value.predictedEndTranslation.width / max(totalWidth, 1))
+                let predictedTarget = dragStartProgress + (predictedRatio * model.goal)
+                let target = dragStartProgress + (deltaRatio * model.goal)
+
+                let shouldSnapToGoal = predictedTarget >= model.goal * 0.95 || value.translation.width >= totalWidth * 0.6
+                let shouldSnapToZero = predictedTarget <= model.goal * -0.05 || value.translation.width <= -totalWidth * 0.6
+
+                if shouldSnapToGoal {
+                    displayProgress = model.goal
+                    updateProgress(to: model.goal)
+                    rigidFeedback.impactOccurred()
+                } else if shouldSnapToZero {
+                    displayProgress = 0
+                    updateProgress(to: 0)
+                    rigidFeedback.impactOccurred()
+                } else if model.goal <= model.step {
+                    if target >= model.goal * 0.5 {
+                        displayProgress = model.goal
+                        updateProgress(to: model.goal)
+                        rigidFeedback.impactOccurred()
+                    } else {
+                        displayProgress = 0
+                        updateProgress(to: 0)
+                        if dragStartProgress > 0 {
+                            rigidFeedback.impactOccurred()
+                        }
+                    }
+                } else {
+                    displayProgress = max(0, min(model.goal, target))
+                    updateProgress(to: target)
+                    if abs(target - dragStartProgress) > 0.0001 {
+                        rigidFeedback.impactOccurred()
+                    }
+                }
+
+                isDragging = false
+
+                withAnimation(.easeOut(duration: 0.2)) {
+                    displayProgress = progress
+                }
+            }
+    }
+
+    private func updateProgress(to target: Double) {
+        let clampedRaw = max(0, min(model.goal, target))
+        displayProgress = clampedRaw
+
+        let quantized = quantize(clampedRaw)
+        let previous = progress
+
+        guard abs(quantized - previous) > 0.0001 else { return }
+
+        withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.85)) {
+            progress = quantized
+        }
+        onProgressChange(quantized)
+        handleStepHaptics(previous: previous, newValue: quantized)
+        handleCompletionState(for: quantized)
+
+        if !isDragging {
+            withAnimation(.easeOut(duration: 0.2)) {
+                displayProgress = quantized
+            }
+        }
+    }
+
+    private func handleStepHaptics(previous: Double, newValue: Double) {
+        guard model.step > 0 else { return }
+
+        let previousIndex = Int((previous / model.step).rounded(.down))
+        let newIndex = Int((newValue / model.step).rounded(.down))
+
+        guard newIndex != previousIndex else { return }
+
+        if newValue >= model.goal - 0.0001 {
+            if hasCelebratedCompletion == false {
+                notificationFeedback.notificationOccurred(.success)
+                hasCelebratedCompletion = true
+            }
+        } else {
+            hasCelebratedCompletion = false
+            let delta = newIndex - previousIndex
+            let iterations = min(abs(delta), 6)
+
+            if delta > 0 {
+                for _ in 0..<iterations {
+                    mediumFeedback.impactOccurred()
+                }
+            } else {
+                for _ in 0..<iterations {
+                    lightFeedback.impactOccurred()
+                }
+            }
+        }
+    }
+
+    private func handleCompletionState(for value: Double) {
+        let isComplete = value >= model.goal - 0.0001
+        if isComplete {
+            if showCompletion == false {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    showCompletion = true
+                }
+            }
+        } else if showCompletion {
+            withAnimation(.easeOut(duration: 0.15)) {
+                showCompletion = false
+            }
+        }
+
+        if !isComplete {
+            hasCelebratedCompletion = false
+        }
+    }
+
+    private func quantize(_ value: Double) -> Double {
+        guard model.step > 0 else { return value }
+        let stepCount = (value / model.step).rounded()
+        return stepCount * model.step
+    }
+
+    private static let numberFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.maximumFractionDigits = 0
+        formatter.minimumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
+        formatter.roundingMode = .down
         return formatter
     }()
-
-    private var subtitle: String? {
-        if let note = instance.note, instance.status == .skippedWithNote {
-            return "Skipped · \(note)"
-        }
-        return nil
-    }
-
-    private var paletteColors: [Color] {
-        DesignTokens.cardPalettes[colorIndex % DesignTokens.cardPalettes.count]
-    }
-
-    private var icon: String {
-        instance.isHabit ? "🧗" : "📝"
-    }
-
-    var body: some View {
-        let palette = paletteColors
-
-        SherpaCard(
-            backgroundStyle: .solid(Color.white),
-            strokeColor: Color.white,
-            strokeOpacity: 0.7,
-            padding: DesignTokens.Spacing.lg,
-            shadowColor: Color.black.opacity(0.05)
-        ) {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
-                PaletteAccent(colors: palette)
-                    .padding(.bottom, DesignTokens.Spacing.sm)
-
-                HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
-                    Text(icon)
-                        .font(.system(size: 36))
-                        .accessibilityHidden(true)
-
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                        Text(instance.displayName)
-                            .font(.system(.title3, design: .rounded).weight(.bold))
-                            .foregroundStyle(Color.sherpaTextPrimary)
-
-                        Text(instance.isHabit ? "Habit" : "Task")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.sherpaTextSecondary)
-                    }
-
-                    Spacer()
-
-                    Text(statusLabel)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(statusColors.foreground)
-                        .padding(.horizontal, DesignTokens.Spacing.sm)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(statusColors.background)
-                        )
-                        .accessibilityLabel(statusAccessibilityLabel)
-                }
-
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.footnote)
-                        .foregroundStyle(Color.sherpaTextSecondary)
-                        .accessibilityLabel("Skip note: \(subtitle)")
-                } else if let completionDescription {
-                    Text(completionDescription)
-                        .font(.footnote)
-                        .foregroundStyle(Color.sherpaTextSecondary)
-                } else {
-                    Text(encouragementText)
-                        .font(.footnote)
-                        .foregroundStyle(Color.sherpaTextSecondary)
-                }
-
-                HStack(spacing: DesignTokens.Spacing.sm) {
-                    Button {
-                        onToggleComplete()
-                    } label: {
-                        SherpaChip(
-                            style: toggleChipStyle,
-                            isSelected: true,
-                            horizontalPadding: DesignTokens.Spacing.lg,
-                            verticalPadding: DesignTokens.Spacing.sm,
-                            font: DesignTokens.Fonts.button()
-                        ) {
-                            HStack(spacing: DesignTokens.Spacing.xs) {
-                                Image(systemName: instance.status == .completed ? "arrow.uturn.left" : "checkmark.circle")
-                                    .font(.headline.weight(.bold))
-                                Text(instance.status == .completed ? "Reset" : "Mark done")
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint(instance.status == .completed ? "Mark this routine as pending again." : "Mark this routine as completed.")
-
-                    Menu {
-                        Button("Skip today", role: .destructive) {
-                            onSkip()
-                        }
-                        Button("Skip with note") {
-                            onSkipWithNote()
-                        }
-                    } label: {
-                        SherpaChip(
-                            style: .accent(DesignTokens.Colors.accentBlue),
-                            isSelected: false,
-                            horizontalPadding: DesignTokens.Spacing.md,
-                            verticalPadding: DesignTokens.Spacing.sm,
-                            font: DesignTokens.Fonts.button()
-                        ) {
-                            HStack(spacing: DesignTokens.Spacing.xs) {
-                                Image(systemName: "ellipsis")
-                                Text("Skip")
-                            }
-                        }
-                    }
-                    .menuOrder(.fixed)
-                    .accessibilityHint("Skip options for this routine.")
-                }
-            }
-        }
-    }
-
-    private var statusLabel: String {
-        switch instance.status {
-        case .completed:
-            return "Completed"
-        case .pending:
-            return "In Progress"
-        case .skipped:
-            return "Skipped"
-        case .skippedWithNote:
-            return "Skipped · Note"
-        }
-    }
-
-    private var statusAccessibilityLabel: String {
-        switch instance.status {
-        case .completed:
-            return "Completed"
-        case .pending:
-            return "Pending"
-        case .skipped:
-            return "Skipped"
-        case .skippedWithNote:
-            return "Skipped with note"
-        }
-    }
-
-    private var statusColors: (background: Color, foreground: Color) {
-        switch instance.status {
-        case .completed:
-            return (DesignTokens.Colors.accentMint.opacity(0.3), DesignTokens.Colors.accentMint)
-        case .pending:
-            return (DesignTokens.Colors.accentBlue.opacity(0.2), DesignTokens.Colors.accentBlue)
-        case .skipped:
-            return (DesignTokens.Colors.accentPink.opacity(0.25), DesignTokens.Colors.accentPink)
-        case .skippedWithNote:
-            return (DesignTokens.Colors.accentPurple.opacity(0.25), DesignTokens.Colors.accentPurple)
-        }
-    }
-
-    private var encouragementText: String {
-        if qualifiesForStreak && instance.isHabit {
-            return "Complete to protect today's streak."
-        }
-        if instance.isHabit {
-            return "Tiny steps build strong habits."
-        }
-        return "Wrap this task to stay on track."
-    }
-
-    private var completionDescription: String? {
-        guard instance.status == .completed, let completedAt = instance.completedAt else { return nil }
-        let relative = RoutineCard.relativeFormatter.localizedString(for: completedAt, relativeTo: Date())
-        return "Completed \(relative)"
-    }
-
-    private var toggleChipStyle: SherpaChipStyle {
-        instance.status == .completed
-            ? .gradient([DesignTokens.Colors.accentPink, DesignTokens.Colors.accentLavender])
-            : .gradient([DesignTokens.Colors.primary, DesignTokens.Colors.accentMint])
-    }
 }
 
-private struct PaletteAccent: View {
-    let colors: [Color]
+struct HabitProgressItem: Identifiable {
+    let id = UUID()
+    var title: String
+    var subtitle: String
+    var icon: String
+    var unit: String
+    var goal: Double
+    var step: Double
+    var accentColor: Color
+    var backgroundColor: Color
+    var current: Double
+}
+
+struct HabitTileDemoView: View {
+    @State private var items: [HabitProgressItem] = [
+        HabitProgressItem(title: "Drink Water", subtitle: "Hydration", icon: "💧", unit: "ml", goal: 3000, step: 250, accentColor: Color(hex: "#28A6FF"), backgroundColor: Color(hex: "#DFF1FF"), current: 1350),
+        HabitProgressItem(title: "Eat 100g Protein", subtitle: "Nutrition", icon: "🍗", unit: "g", goal: 400, step: 25, accentColor: Color(hex: "#68E08C"), backgroundColor: Color(hex: "#E5FBEA"), current: 370),
+        HabitProgressItem(title: "Morning Walk", subtitle: "Movement", icon: "🚶", unit: "steps", goal: 8000, step: 500, accentColor: Color(hex: "#FF914D"), backgroundColor: Color(hex: "#FFE9D8"), current: 4500),
+        HabitProgressItem(title: "Meditate", subtitle: "Mindfulness", icon: "🧘", unit: "min", goal: 20, step: 5, accentColor: Color(hex: "#BA8CFF"), backgroundColor: Color(hex: "#F2E7FF"), current: 10)
+    ]
 
     var body: some View {
-        HStack(spacing: -18) {
-            ForEach(Array(colors.enumerated()), id: \.offset) { index, color in
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(color.opacity(0.8))
-                    .frame(width: 60, height: 22)
-                    .shadow(color: color.opacity(0.25), radius: 6, y: 3)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color.white.opacity(0.45), lineWidth: 1)
+        ScrollView {
+            VStack(spacing: DesignTokens.Spacing.md) {
+                ForEach($items) { $item in
+                    let model = HabitTileModel(
+                        title: item.title,
+                        subtitle: item.subtitle,
+                        icon: item.icon,
+                        goal: item.goal,
+                        unit: item.unit,
+                        step: item.step,
+                        accentColor: item.accentColor,
+                        backgroundColor: item.backgroundColor
                     )
-                    .zIndex(Double(colors.count - index))
+
+                    HabitTile(model: model, progress: $item.current) { newValue in
+                        saveProgress(for: item, updatedValue: newValue)
+                    }
+                }
             }
+            .padding(DesignTokens.Spacing.lg)
         }
-        .padding(.leading, 4)
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
+        .background(Color.sherpaBackground.ignoresSafeArea())
+    }
+
+    private func saveProgress(for item: HabitProgressItem, updatedValue: Double) {
+        let percent = item.goal > 0 ? Int((updatedValue / item.goal) * 100) : 0
+        print("Demo progress for \(item.title): \(Int(updatedValue))/\(Int(item.goal)) \(item.unit) (\(percent)% done)")
     }
 }
 
 private struct EmptyStateView: View {
     var body: some View {
-        SherpaCard(
-            backgroundStyle: .solid(Color.white),
-            strokeColor: Color.white,
-            strokeOpacity: 0.7,
-            padding: DesignTokens.Spacing.xl,
-            shadowColor: Color.black.opacity(0.05)
-        ) {
-            VStack(spacing: DesignTokens.Spacing.lg) {
-                PaletteAccent(colors: [
-                    DesignTokens.Colors.primary,
-                    DesignTokens.Colors.accentMint,
-                    DesignTokens.Colors.accentBlue
-                ])
-                .padding(.bottom, DesignTokens.Spacing.sm)
-
-                Text("No habits scheduled today")
-                    .font(.system(.title3, design: .rounded).weight(.bold))
-                    .foregroundStyle(Color.sherpaTextPrimary)
-
-                Text("Use the calendar above to jump to another day or plan ahead with your coach later.")
-                    .font(DesignTokens.Fonts.body())
-                    .foregroundStyle(Color.sherpaTextSecondary)
-                    .multilineTextAlignment(.center)
-            }
+        Text("All goals completed today, tap below to create new goal")
+            .font(DesignTokens.Fonts.body().weight(.semibold))
+            .foregroundStyle(Color.sherpaTextSecondary)
+            .multilineTextAlignment(.center)
+            .padding(DesignTokens.Spacing.xl)
             .frame(maxWidth: .infinity)
-        }
+            .background(Color.clear)
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                    .stroke(
+                        DesignTokens.Colors.neutral.g3,
+                        style: StrokeStyle(lineWidth: 4, dash: [10, 6])
+                    )
+            )
     }
 }
 
@@ -736,23 +1022,36 @@ private struct AddHabitsButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: DesignTokens.Spacing.sm) {
-                Image(systemName: "plus.circle.fill")
-                    .foregroundStyle(Color.white)
-                Text("Add Habits")
+            ZStack {
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                    .fill(Color(hex: "#2F7C1B"))
+                    .offset(y: 4)
+                    .opacity(0.9)
+
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                    .fill(Color(hex: "#58B62F"))
+
+                Text("ADD HABITS")
                     .font(.system(.headline, design: .rounded).weight(.bold))
                     .foregroundStyle(Color.white)
+                    .kerning(1.1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignTokens.Spacing.md)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(DesignTokens.Colors.primary)
-            )
-            .shadow(color: DesignTokens.Colors.primary.opacity(0.35), radius: 10, y: 6)
+            .frame(height: 54)
+            .shadow(color: Color.black.opacity(0.08), radius: 6, y: 3)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressedScaleButtonStyle())
         .accessibilityLabel("Add a new habit")
+    }
+}
+
+private struct PressedScaleButtonStyle: ButtonStyle {
+    var scale: CGFloat = 0.97
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 

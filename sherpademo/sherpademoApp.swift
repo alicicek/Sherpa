@@ -22,11 +22,13 @@ struct sherpademoApp: App {
             fatalError("Failed to initialise model container: \(error)")
         }
     }()
+    @StateObject private var xpStore = XPStore()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .modelContainer(modelContainer)
+                .environmentObject(xpStore)
         }
     }
 }

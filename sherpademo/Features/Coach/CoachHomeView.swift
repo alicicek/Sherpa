@@ -1,0 +1,428 @@
+//
+//  CoachHomeView.swift
+//  sherpademo
+//
+//  Created by Codex on 16/10/2025.
+//
+
+import Combine
+import SwiftUI
+import UIKit
+
+@MainActor
+final class CoachViewModel: ObservableObject {
+    @Published var messages: [CoachMessage] = []
+    @Published var composerText: String = ""
+    @Published var isCoachTyping: Bool = false
+
+    private var responseIndex: Int = 0
+    private var pendingResponseWorkItems: [DispatchWorkItem] = []
+    private let cannedResponses: [[String]] = [
+        [
+            "Love that energy!",
+            "Remember: tiny wins count just as much as the big swings.",
+            "Want help lining up one small action for today?"
+        ],
+        [
+            "Totally hear you.",
+            "Let’s zoom into the next hour instead of the whole day.",
+            "What’s one thing you could wrap up before you take a break?"
+        ],
+        [
+            "You’re building momentum, even if it doesn’t feel like it yet.",
+            "How about we celebrate one win you’ve had this week?"
+        ]
+    ]
+
+    init() {
+        seedConversation()
+    }
+
+    func sendComposerMessage() {
+        let trimmed = composerText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        composerText = ""
+        appendUserMessage(trimmed)
+        respondToUser()
+    }
+
+    func appendUserMessage(_ text: String) {
+        messages.append(CoachMessage(text: text, role: .user))
+    }
+
+    private func respondToUser() {
+        let response = cannedResponses[safe: responseIndex] ?? cannedResponses.randomElement() ?? []
+        responseIndex = (responseIndex + 1) % cannedResponses.count
+        guard !response.isEmpty else { return }
+
+        cancelPendingResponses()
+
+        isCoachTyping = true
+
+        let leadDelay: TimeInterval = 0.7
+        let bubbleSpacing: TimeInterval = 0.52
+
+        for (index, bubble) in response.enumerated() {
+            var workItem: DispatchWorkItem?
+            workItem = DispatchWorkItem { [weak self] in
+                guard let self, let workItem else { return }
+
+                if index == 0 {
+                    self.isCoachTyping = false
+                }
+
+                self.messages.append(CoachMessage(text: bubble, role: .coach))
+                self.pendingResponseWorkItems.removeAll { $0 === workItem }
+            }
+
+            if let workItem {
+                pendingResponseWorkItems.append(workItem)
+                DispatchQueue.main.asyncAfter(
+                    deadline: .now() + leadDelay + bubbleSpacing * Double(index),
+                    execute: workItem
+                )
+            }
+        }
+
+        let typingReset = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.isCoachTyping = false
+        }
+        pendingResponseWorkItems.append(typingReset)
+
+        let totalDelay = leadDelay + bubbleSpacing * Double(response.count)
+        DispatchQueue.main.asyncAfter(deadline: .now() + totalDelay, execute: typingReset)
+    }
+
+    private func cancelPendingResponses() {
+        pendingResponseWorkItems.forEach { $0.cancel() }
+        pendingResponseWorkItems.removeAll()
+        isCoachTyping = false
+    }
+
+
+    private func seedConversation() {
+        messages = [
+            CoachMessage(text: "Hey, I’m Summit — your Sherpa coach.", role: .coach),
+            CoachMessage(text: "Here for pep-talks, quick nudges, and the occasional reality check.", role: .coach),
+            CoachMessage(text: "What’s on your mind today?", role: .coach),
+            CoachMessage(text: "Just exploring the app right now!", role: .user)
+        ]
+    }
+}
+
+struct CoachHomeView: View {
+    @StateObject private var viewModel = CoachViewModel()
+    @StateObject private var keyboardObserver = KeyboardObserver()
+    @FocusState private var isComposerFocused: Bool
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            GeometryReader { proxy in
+                let keyboardPadding = max(0, keyboardObserver.currentHeight - proxy.safeAreaInsets.bottom)
+
+                ZStack {
+                    Color.sherpaBackground
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 0) {
+                        ConversationListView(
+                            messages: viewModel.messages,
+                            isCoachTyping: viewModel.isCoachTyping,
+                            keyboardHeight: keyboardPadding,
+                            onBackgroundTap: {
+                                isComposerFocused = false
+                                hideKeyboard()
+                            }
+                        )
+
+                        Divider()
+                            .overlay(Color.white)
+
+                        CoachComposer(
+                            text: $viewModel.composerText,
+                            isFocused: $isComposerFocused,
+                            onSend: {
+                                viewModel.sendComposerMessage()
+                            }
+                        )
+                        .padding(.bottom, keyboardPadding)
+                    }
+                }
+            }
+            .navigationTitle("Sherpa Coach")
+            .toolbarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("Back", systemImage: "chevron.backward")
+                            .labelStyle(.titleAndIcon)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct ConversationListView: View {
+    let messages: [CoachMessage]
+    let isCoachTyping: Bool
+    let keyboardHeight: CGFloat
+    var onBackgroundTap: () -> Void
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: DesignTokens.Spacing.md) {
+                    ForEach(messages) { message in
+                        MessageRow(message: message)
+                            .id(message.id)
+                    }
+
+                    if isCoachTyping {
+                        TypingIndicatorRow()
+                            .id("typing")
+                    }
+                }
+                .padding(.horizontal, DesignTokens.Spacing.lg)
+                .padding(.vertical, DesignTokens.Spacing.xl)
+                .padding(.bottom, keyboardHeight)
+                .frame(maxWidth: .infinity)
+            }
+            .background(Color.clear)
+            .scrollDismissesKeyboard(.interactively)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onBackgroundTap()
+            }
+            .onChange(of: messages) { _ in
+                scrollToBottom(proxy, includeTyping: false)
+            }
+            .onChange(of: isCoachTyping) { newValue in
+                if newValue {
+                    scrollToBottom(proxy, includeTyping: true)
+                }
+            }
+            .onChange(of: keyboardHeight) { newValue in
+                if newValue > 0 {
+                    scrollToBottom(proxy, includeTyping: true)
+                }
+            }
+            .onAppear {
+                scrollToBottom(proxy, includeTyping: false)
+            }
+        }
+    }
+
+    private func scrollToBottom(_ proxy: ScrollViewProxy, includeTyping: Bool) {
+        DispatchQueue.main.async {
+            guard !messages.isEmpty || includeTyping else { return }
+
+            withAnimation(.easeInOut(duration: 0.3)) {
+                if includeTyping {
+                    proxy.scrollTo("typing", anchor: .bottom)
+                } else if let lastId = messages.last?.id {
+                    proxy.scrollTo(lastId, anchor: .bottom)
+                }
+            }
+        }
+    }
+}
+
+private struct MessageRow: View {
+    let message: CoachMessage
+
+    private var isUser: Bool { message.role == .user }
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: DesignTokens.Spacing.sm) {
+            if isUser { Spacer(minLength: DesignTokens.Spacing.lg) }
+
+            Text(message.text)
+                .font(DesignTokens.Fonts.body())
+                .foregroundStyle(isUser ? Color.white : Color.sherpaTextPrimary)
+                .multilineTextAlignment(isUser ? .trailing : .leading)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.sm)
+                .background(messageBackground)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous))
+                .frame(maxWidth: 260, alignment: isUser ? .trailing : .leading)
+                .accessibilityLabel(accessibilityText)
+
+            if !isUser { Spacer(minLength: DesignTokens.Spacing.lg) }
+        }
+        .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
+        .padding(.horizontal, DesignTokens.Spacing.sm)
+    }
+
+    private var messageBackground: some ShapeStyle {
+        if isUser {
+            return Color.sherpaPrimary
+        } else {
+            return Color.white
+        }
+    }
+
+    private var accessibilityText: Text {
+        if isUser {
+            return Text("You said, \(message.text)")
+        } else {
+            return Text("Coach said, \(message.text)")
+        }
+    }
+}
+
+private struct TypingIndicatorRow: View {
+    var body: some View {
+        HStack(alignment: .bottom, spacing: DesignTokens.Spacing.sm) {
+            TypingBubble()
+            Spacer(minLength: DesignTokens.Spacing.lg)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, DesignTokens.Spacing.sm)
+    }
+}
+
+private struct TypingBubble: View {
+    @State private var phase: CGFloat = 0
+
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.xs) {
+            ForEach(0..<3) { index in
+                Circle()
+                    .fill(Color.sherpaTextSecondary.opacity(0.6))
+                    .frame(width: 8, height: 8)
+                    .opacity(phase == CGFloat(index) ? 1 : 0.4)
+            }
+        }
+        .padding(.horizontal, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.sm)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous))
+        .accessibilityLabel("Coach is typing")
+        .task {
+            var current = 0
+
+            while true {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    phase = CGFloat(current)
+                }
+
+                current = (current + 1) % 3
+
+                do {
+                    try await _Concurrency.Task.sleep(nanoseconds: 380_000_000)
+                } catch {
+                    break
+                }
+            }
+        }
+    }
+}
+
+private struct CoachComposer: View {
+    @Binding var text: String
+    var isFocused: FocusState<Bool>.Binding
+    var onSend: () -> Void
+
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.sm) {
+            TextField("Type a message", text: $text, axis: .vertical)
+                .lineLimit(1...3)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
+                        .fill(Color.white)
+                )
+                .focused(isFocused)
+                .submitLabel(.send)
+                .onSubmit {
+                    if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        onSend()
+                    }
+                }
+
+            Button(action: onSend) {
+                Image(systemName: "paperplane.fill")
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Color.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.sherpaTextSecondary.opacity(0.25) : Color.sherpaPrimary)
+                    )
+            }
+            .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+        .padding(.horizontal, DesignTokens.Spacing.lg)
+        .padding(.vertical, DesignTokens.Spacing.md)
+        .background(
+            Color.sherpaBackground
+                .shadow(color: Color.black.opacity(0.05), radius: 6, y: -2)
+        )
+    }
+}
+
+struct CoachMessage: Identifiable, Equatable {
+    enum Role {
+        case coach
+        case user
+    }
+
+    let id = UUID()
+    let text: String
+    let role: Role
+}
+
+private final class KeyboardObserver: ObservableObject {
+    @Published var currentHeight: CGFloat = 0
+
+    private var cancellables: Set<AnyCancellable> = []
+
+    init() {
+        let willChange = NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)
+        let willHide = NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)
+
+        Publishers.Merge(willChange, willHide)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] notification in
+                guard let self else { return }
+
+                guard let userInfo = notification.userInfo,
+                      let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+                      let windowScene = UIApplication.shared.connectedScenes
+                        .compactMap({ $0 as? UIWindowScene })
+                        .first else {
+                    self.currentHeight = 0
+                    return
+                }
+
+                let screenHeight = windowScene.screen.bounds.height
+                let overlap = max(0, screenHeight - endFrame.origin.y)
+                self.currentHeight = overlap
+            }
+            .store(in: &cancellables)
+    }
+}
+
+private func hideKeyboard() {
+#if canImport(UIKit)
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+#endif
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        guard indices.contains(index) else { return nil }
+        return self[index]
+    }
+}
+
+#Preview {
+    CoachHomeView()
+}

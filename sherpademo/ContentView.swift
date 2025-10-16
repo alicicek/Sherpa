@@ -27,25 +27,17 @@ struct ContentView: View {
                 }
                 .tag(AppTab.habits)
 
-            TabPlaceholderView(
-                title: "Focus",
-                message: "Start a focus session to earn XP and keep distractions at bay.",
-                illustrationSymbol: "binoculars"
-            )
+            FocusHomeView()
             .tabItem {
                 Label("Focus", systemImage: "binoculars")
             }
             .tag(AppTab.focus)
 
-            TabPlaceholderView(
-                title: "AI Coach",
-                message: "Chat with the Sherpa Coach for tips, nudges, and personalized boosts.",
-                illustrationSymbol: "bubble.left.and.bubble.right"
-            )
-            .tabItem {
-                Label("Coach", systemImage: "bubble.left.and.bubble.right")
-            }
-            .tag(AppTab.coach)
+            CoachHomeView()
+                .tabItem {
+                    Label("Coach", systemImage: "bubble.left.and.bubble.right")
+                }
+                .tag(AppTab.coach)
 
             TabPlaceholderView(
                 title: "Insights",
@@ -127,4 +119,5 @@ private struct TabPlaceholderView: View {
 #Preview {
     ContentView()
         .modelContainer(for: [Habit.self, Task.self, HabitInstance.self, RecurrenceRule.self], inMemory: true)
+        .environmentObject(XPStore())
 }

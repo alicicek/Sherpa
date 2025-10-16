@@ -46,7 +46,7 @@ enum DesignTokens {
         static let large: CGFloat = 24
         static let medium: CGFloat = 20
         static let pill: CGFloat = 32
-        static let small: CGFloat = 12
+        static let small: CGFloat = 16
     }
 
     enum Spacing {
