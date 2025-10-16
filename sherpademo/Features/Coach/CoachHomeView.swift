@@ -168,6 +168,8 @@ struct CoachHomeView: View {
 }
 
 private struct ConversationListView: View {
+    private let bottomAnchorId = "conversation-bottom-anchor"
+
     let messages: [CoachMessage]
     let isCoachTyping: Bool
     let keyboardHeight: CGFloat
@@ -186,6 +188,10 @@ private struct ConversationListView: View {
                         TypingIndicatorRow()
                             .id("typing")
                     }
+
+                    Color.clear
+                        .frame(height: 1)
+                        .id(bottomAnchorId)
                 }
                 .padding(.horizontal, DesignTokens.Spacing.lg)
                 .padding(.vertical, DesignTokens.Spacing.xl)
@@ -199,34 +205,28 @@ private struct ConversationListView: View {
                 onBackgroundTap()
             }
             .onChange(of: messages) { _ in
-                scrollToBottom(proxy, includeTyping: false)
+                scrollToBottom(proxy)
             }
             .onChange(of: isCoachTyping) { newValue in
                 if newValue {
-                    scrollToBottom(proxy, includeTyping: true)
+                    scrollToBottom(proxy)
                 }
             }
             .onChange(of: keyboardHeight) { newValue in
                 if newValue > 0 {
-                    scrollToBottom(proxy, includeTyping: true)
+                    scrollToBottom(proxy)
                 }
             }
             .onAppear {
-                scrollToBottom(proxy, includeTyping: false)
+                scrollToBottom(proxy)
             }
         }
     }
 
-    private func scrollToBottom(_ proxy: ScrollViewProxy, includeTyping: Bool) {
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
         DispatchQueue.main.async {
-            guard !messages.isEmpty || includeTyping else { return }
-
             withAnimation(.easeInOut(duration: 0.3)) {
-                if includeTyping {
-                    proxy.scrollTo("typing", anchor: .bottom)
-                } else if let lastId = messages.last?.id {
-                    proxy.scrollTo(lastId, anchor: .bottom)
-                }
+                proxy.scrollTo(bottomAnchorId, anchor: .bottom)
             }
         }
     }
