@@ -12,8 +12,6 @@ struct FocusHomeView: View {
     @StateObject private var viewModel = FocusTimerViewModel()
     @EnvironmentObject private var xpStore: XPStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.safeAreaInsets) private var safeAreaInsets
-
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var confettiTrigger: Int = 0
     @State private var celebrateBadgeVisible = false
@@ -22,6 +20,16 @@ struct FocusHomeView: View {
     private let focusXPReward = 25
 
     var body: some View {
+        GeometryReader { proxy in
+            buildContent(safeAreaInsets: proxy.safeAreaInsets)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+}
+
+private extension FocusHomeView {
+    @ViewBuilder
+    func buildContent(safeAreaInsets: EdgeInsets) -> some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: DesignTokens.Spacing.xl + DesignTokens.Spacing.lg) {
@@ -75,9 +83,6 @@ struct FocusHomeView: View {
             }
         }
     }
-}
-
-private extension FocusHomeView {
     var phaseHeader: some View {
         Text(viewModel.isInBreak ? "Break" : "Flow")
             .font(.system(.title3, design: .rounded).weight(.medium))

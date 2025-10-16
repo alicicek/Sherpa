@@ -59,8 +59,8 @@ final class CoachViewModel: ObservableObject {
 
         isCoachTyping = true
 
-        let leadDelay: TimeInterval = 0.7
-        let bubbleSpacing: TimeInterval = 0.52
+        let leadDelay: TimeInterval = 1.0
+        let bubbleSpacing: TimeInterval = 1.0
 
         for (index, bubble) in response.enumerated() {
             var workItem: DispatchWorkItem?
