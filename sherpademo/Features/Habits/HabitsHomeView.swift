@@ -677,7 +677,6 @@ struct HabitTile: View {
     @Binding var progress: Double
     var onProgressChange: (Double) -> Void
 
-    @State private var showCompletion: Bool = false
     @State private var isDragging: Bool = false
     @State private var hasCelebratedCompletion = false
     @State private var dragStartProgress: Double = 0
@@ -758,15 +757,6 @@ struct HabitTile: View {
             }
             .frame(height: tileHeight)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .overlay(alignment: .topTrailing) {
-                if showCompletion {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundStyle(model.accentColor)
-                        .padding(8)
-                        .transition(.scale(scale: 0.6, anchor: .topTrailing).combined(with: .opacity))
-                }
-            }
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(model.accentColor.opacity(isDragging ? 0.22 : 0.14), lineWidth: 1)
@@ -913,18 +903,6 @@ struct HabitTile: View {
 
     private func handleCompletionState(for value: Double) {
         let isComplete = value >= model.goal - 0.0001
-        if isComplete {
-            if showCompletion == false {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                    showCompletion = true
-                }
-            }
-        } else if showCompletion {
-            withAnimation(.easeOut(duration: 0.15)) {
-                showCompletion = false
-            }
-        }
-
         if !isComplete {
             hasCelebratedCompletion = false
         }
