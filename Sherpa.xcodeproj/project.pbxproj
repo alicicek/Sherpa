@@ -12,37 +12,37 @@
 			containerPortal = 95B1F5382E9FDD5C00777560 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 95B1F53F2E9FDD5C00777560;
-			remoteInfo = sherpademo;
+			remoteInfo = Sherpa;
 		};
 		95B1F55D2E9FDD5D00777560 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 95B1F5382E9FDD5C00777560 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 95B1F53F2E9FDD5C00777560;
-			remoteInfo = sherpademo;
+			remoteInfo = Sherpa;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		95B1F5402E9FDD5C00777560 /* sherpademo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sherpademo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		95B1F5522E9FDD5D00777560 /* sherpademoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = sherpademoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		95B1F55C2E9FDD5D00777560 /* sherpademoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = sherpademoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		95B1F5402E9FDD5C00777560 /* Sherpa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sherpa.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		95B1F5522E9FDD5D00777560 /* SherpaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		95B1F55C2E9FDD5D00777560 /* SherpaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		95B1F5422E9FDD5C00777560 /* sherpademo */ = {
+		95B1F5422E9FDD5C00777560 /* Sherpa */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = sherpademo;
+			path = Sherpa;
 			sourceTree = "<group>";
 		};
-		95B1F5552E9FDD5D00777560 /* sherpademoTests */ = {
+		95B1F5552E9FDD5D00777560 /* SherpaTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = sherpademoTests;
+			path = SherpaTests;
 			sourceTree = "<group>";
 		};
-		95B1F55F2E9FDD5D00777560 /* sherpademoUITests */ = {
+		95B1F55F2E9FDD5D00777560 /* SherpaUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = sherpademoUITests;
+			path = SherpaUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,9 +75,9 @@
 		95B1F5372E9FDD5C00777560 = {
 			isa = PBXGroup;
 			children = (
-				95B1F5422E9FDD5C00777560 /* sherpademo */,
-				95B1F5552E9FDD5D00777560 /* sherpademoTests */,
-				95B1F55F2E9FDD5D00777560 /* sherpademoUITests */,
+				95B1F5422E9FDD5C00777560 /* Sherpa */,
+				95B1F5552E9FDD5D00777560 /* SherpaTests */,
+				95B1F55F2E9FDD5D00777560 /* SherpaUITests */,
 				95B1F5412E9FDD5C00777560 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -85,9 +85,9 @@
 		95B1F5412E9FDD5C00777560 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				95B1F5402E9FDD5C00777560 /* sherpademo.app */,
-				95B1F5522E9FDD5D00777560 /* sherpademoTests.xctest */,
-				95B1F55C2E9FDD5D00777560 /* sherpademoUITests.xctest */,
+				95B1F5402E9FDD5C00777560 /* Sherpa.app */,
+				95B1F5522E9FDD5D00777560 /* SherpaTests.xctest */,
+				95B1F55C2E9FDD5D00777560 /* SherpaUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,9 +95,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		95B1F53F2E9FDD5C00777560 /* sherpademo */ = {
+		95B1F53F2E9FDD5C00777560 /* Sherpa */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 95B1F5662E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "sherpademo" */;
+			buildConfigurationList = 95B1F5662E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "Sherpa" */;
 			buildPhases = (
 				95B1F53C2E9FDD5C00777560 /* Sources */,
 				95B1F53D2E9FDD5C00777560 /* Frameworks */,
@@ -108,18 +108,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				95B1F5422E9FDD5C00777560 /* sherpademo */,
+				95B1F5422E9FDD5C00777560 /* Sherpa */,
 			);
-			name = sherpademo;
+			name = Sherpa;
 			packageProductDependencies = (
 			);
-			productName = sherpademo;
-			productReference = 95B1F5402E9FDD5C00777560 /* sherpademo.app */;
+			productName = Sherpa;
+			productReference = 95B1F5402E9FDD5C00777560 /* Sherpa.app */;
 			productType = "com.apple.product-type.application";
 		};
-		95B1F5512E9FDD5D00777560 /* sherpademoTests */ = {
+		95B1F5512E9FDD5D00777560 /* SherpaTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 95B1F5692E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "sherpademoTests" */;
+			buildConfigurationList = 95B1F5692E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "SherpaTests" */;
 			buildPhases = (
 				95B1F54E2E9FDD5D00777560 /* Sources */,
 				95B1F54F2E9FDD5D00777560 /* Frameworks */,
@@ -131,18 +131,18 @@
 				95B1F5542E9FDD5D00777560 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				95B1F5552E9FDD5D00777560 /* sherpademoTests */,
+				95B1F5552E9FDD5D00777560 /* SherpaTests */,
 			);
-			name = sherpademoTests;
+			name = SherpaTests;
 			packageProductDependencies = (
 			);
-			productName = sherpademoTests;
-			productReference = 95B1F5522E9FDD5D00777560 /* sherpademoTests.xctest */;
+			productName = SherpaTests;
+			productReference = 95B1F5522E9FDD5D00777560 /* SherpaTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		95B1F55B2E9FDD5D00777560 /* sherpademoUITests */ = {
+		95B1F55B2E9FDD5D00777560 /* SherpaUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 95B1F56C2E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "sherpademoUITests" */;
+			buildConfigurationList = 95B1F56C2E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "SherpaUITests" */;
 			buildPhases = (
 				95B1F5582E9FDD5D00777560 /* Sources */,
 				95B1F5592E9FDD5D00777560 /* Frameworks */,
@@ -154,13 +154,13 @@
 				95B1F55E2E9FDD5D00777560 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				95B1F55F2E9FDD5D00777560 /* sherpademoUITests */,
+				95B1F55F2E9FDD5D00777560 /* SherpaUITests */,
 			);
-			name = sherpademoUITests;
+			name = SherpaUITests;
 			packageProductDependencies = (
 			);
-			productName = sherpademoUITests;
-			productReference = 95B1F55C2E9FDD5D00777560 /* sherpademoUITests.xctest */;
+			productName = SherpaUITests;
+			productReference = 95B1F55C2E9FDD5D00777560 /* SherpaUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -200,9 +200,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				95B1F53F2E9FDD5C00777560 /* sherpademo */,
-				95B1F5512E9FDD5D00777560 /* sherpademoTests */,
-				95B1F55B2E9FDD5D00777560 /* sherpademoUITests */,
+				95B1F53F2E9FDD5C00777560 /* Sherpa */,
+				95B1F5512E9FDD5D00777560 /* SherpaTests */,
+				95B1F55B2E9FDD5D00777560 /* SherpaUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -258,12 +258,12 @@
 /* Begin PBXTargetDependency section */
 		95B1F5542E9FDD5D00777560 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 95B1F53F2E9FDD5C00777560 /* sherpademo */;
+			target = 95B1F53F2E9FDD5C00777560 /* Sherpa */;
 			targetProxy = 95B1F5532E9FDD5D00777560 /* PBXContainerItemProxy */;
 		};
 		95B1F55E2E9FDD5D00777560 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 95B1F53F2E9FDD5C00777560 /* sherpademo */;
+			target = 95B1F53F2E9FDD5C00777560 /* Sherpa */;
 			targetProxy = 95B1F55D2E9FDD5D00777560 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -411,7 +411,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = sherpa.sherpademo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sherpadaily.sherpa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -444,7 +444,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = sherpa.sherpademo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sherpadaily.sherpa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -466,7 +466,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = sherpa.sherpademoTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sherpadaily.SherpaTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -474,7 +474,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/sherpademo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/sherpademo";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sherpa.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sherpa";
 			};
 			name = Debug;
 		};
@@ -488,7 +488,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = sherpa.sherpademoTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sherpadaily.SherpaTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -496,7 +496,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/sherpademo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/sherpademo";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sherpa.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sherpa";
 			};
 			name = Release;
 		};
@@ -508,7 +508,7 @@
 				DEVELOPMENT_TEAM = F5P964R966;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = sherpa.sherpademoUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sherpadaily.SherpaUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -516,7 +516,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = sherpademo;
+				TEST_TARGET_NAME = Sherpa;
 			};
 			name = Debug;
 		};
@@ -528,7 +528,7 @@
 				DEVELOPMENT_TEAM = F5P964R966;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = sherpa.sherpademoUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sherpadaily.SherpaUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -536,7 +536,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = sherpademo;
+				TEST_TARGET_NAME = Sherpa;
 			};
 			name = Release;
 		};
@@ -552,7 +552,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		95B1F5662E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "sherpademo" */ = {
+		95B1F5662E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "Sherpa" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				95B1F5672E9FDD5D00777560 /* Debug */,
@@ -561,7 +561,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		95B1F5692E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "sherpademoTests" */ = {
+		95B1F5692E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "SherpaTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				95B1F56A2E9FDD5D00777560 /* Debug */,
@@ -570,7 +570,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		95B1F56C2E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "sherpademoUITests" */ = {
+		95B1F56C2E9FDD5D00777560 /* Build configuration list for PBXNativeTarget "SherpaUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				95B1F56D2E9FDD5D00777560 /* Debug */,

@@ -1,0 +1,31 @@
+{
+  "configurations" : [
+    {
+      "id" : "AEFC8A96-F063-4400-81E6-2BEDCCE9A936",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Sherpa.xcodeproj",
+        "identifier" : "95B1F5512E9FDD5D00777560",
+        "name" : "SherpaTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Sherpa.xcodeproj",
+        "identifier" : "95B1F55B2E9FDD5D00777560",
+        "name" : "SherpaUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
