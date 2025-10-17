@@ -35,6 +35,7 @@ struct HabitsHomeView: View {
     @State private var calendarWindowStart: Date
     @State private var habitProgressValues: [PersistentIdentifier: Double] = [:]
     @State private var habitTileProfiles: [PersistentIdentifier: HabitTileProfile] = [:]
+    @State private var isAnyTileDragging = false
 
     private let calendarSpan: Int = 14
 
@@ -83,7 +84,10 @@ struct HabitsHomeView: View {
                                     let model = tileModel(for: instance, profile: profile)
                                     HabitTile(
                                         model: model,
-                                        progress: progressBinding(for: instance, profile: profile)
+                                        progress: progressBinding(for: instance, profile: profile),
+                                        onDragStateChange: { dragging in
+                                            isAnyTileDragging = dragging
+                                        }
                                     ) { newValue in
                                         handleProgressChange(for: instance, profile: profile, newValue: newValue)
                                     }
@@ -113,6 +117,7 @@ struct HabitsHomeView: View {
                     .padding(.horizontal, DesignTokens.Spacing.lg)
                     .padding(.vertical, DesignTokens.Spacing.xl)
                 }
+                .scrollDisabled(isAnyTileDragging)
             }
             .task {
                 adjustCalendarWindowIfNeeded(for: selectedDate)
@@ -763,7 +768,7 @@ struct HabitTile: View {
             )
             .shadow(color: Color.black.opacity(isDragging ? 0.08 : 0.05), radius: isDragging ? 10 : 8, y: isDragging ? 6 : 4)
             .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .gesture(dragGesture(totalWidth: width))
+            .simultaneousGesture(dragGesture(totalWidth: width))
         }
         .frame(height: tileHeight)
         .onAppear {
