@@ -236,10 +236,9 @@ private struct MessageRow: View {
     let message: CoachMessage
 
     private var isUser: Bool { message.role == .user }
-    private var displayName: String { isUser ? "You" : "Summit" }
     private var avatarAssetName: String { isUser ? "userAvatar" : "coachAvatar" }
     private var messageAlignment: Alignment { isUser ? .trailing : .leading }
-    private var nameAlignment: HorizontalAlignment { isUser ? .trailing : .leading }
+    private var contentAlignment: HorizontalAlignment { isUser ? .trailing : .leading }
     private var avatarBackgroundColor: Color { Color(red: 0.96, green: 0.93, blue: 0.86) }
     private var avatarBorderColor: Color { Color.sherpaTextSecondary.opacity(0.25) }
 
@@ -260,10 +259,7 @@ private struct MessageRow: View {
     }
 
     private var messageContent: some View {
-        VStack(alignment: nameAlignment, spacing: DesignTokens.Spacing.xs) {
-            Text(displayName)
-                .font(DesignTokens.Fonts.captionUppercase())
-                .foregroundStyle(Color.sherpaTextSecondary)
+        VStack(alignment: contentAlignment, spacing: 0) {
             Text(message.text)
                 .font(DesignTokens.Fonts.body())
                 .foregroundStyle(isUser ? Color.white : Color.sherpaTextPrimary)
@@ -304,7 +300,7 @@ private struct MessageRow: View {
     }
 
     private var accessibilityText: Text {
-        Text("\(displayName) said, \(message.text)")
+        Text(isUser ? "You said, \(message.text)" : "Coach said, \(message.text)")
     }
 }
 
