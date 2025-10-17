@@ -236,11 +236,34 @@ private struct MessageRow: View {
     let message: CoachMessage
 
     private var isUser: Bool { message.role == .user }
+    private var displayName: String { isUser ? "You" : "Summit" }
+    private var avatarAssetName: String { isUser ? "userAvatar" : "coachAvatar" }
+    private var messageAlignment: Alignment { isUser ? .trailing : .leading }
+    private var nameAlignment: HorizontalAlignment { isUser ? .trailing : .leading }
+    private var avatarBackgroundColor: Color { Color(red: 0.96, green: 0.93, blue: 0.86) }
+    private var avatarBorderColor: Color { Color.sherpaTextSecondary.opacity(0.25) }
 
     var body: some View {
         HStack(alignment: .bottom, spacing: DesignTokens.Spacing.sm) {
-            if isUser { Spacer(minLength: DesignTokens.Spacing.lg) }
+            if isUser {
+                Spacer(minLength: DesignTokens.Spacing.lg)
+                messageContent
+                avatarView
+            } else {
+                avatarView
+                messageContent
+                Spacer(minLength: DesignTokens.Spacing.lg)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: messageAlignment)
+        .padding(.horizontal, DesignTokens.Spacing.sm)
+    }
 
+    private var messageContent: some View {
+        VStack(alignment: nameAlignment, spacing: DesignTokens.Spacing.xs) {
+            Text(displayName)
+                .font(DesignTokens.Fonts.captionUppercase())
+                .foregroundStyle(Color.sherpaTextSecondary)
             Text(message.text)
                 .font(DesignTokens.Fonts.body())
                 .foregroundStyle(isUser ? Color.white : Color.sherpaTextPrimary)
@@ -251,11 +274,25 @@ private struct MessageRow: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous))
                 .frame(maxWidth: 260, alignment: isUser ? .trailing : .leading)
                 .accessibilityLabel(accessibilityText)
-
-            if !isUser { Spacer(minLength: DesignTokens.Spacing.lg) }
         }
-        .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
-        .padding(.horizontal, DesignTokens.Spacing.sm)
+    }
+
+    private var avatarView: some View {
+        ZStack {
+            Circle()
+                .fill(avatarBackgroundColor)
+            Image(avatarAssetName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 46, height: 46)
+                .clipShape(Circle())
+        }
+        .frame(width: 46, height: 46)
+        .overlay(
+            Circle()
+                .stroke(avatarBorderColor, lineWidth: 1)
+        )
+        .accessibilityHidden(true)
     }
 
     private var messageBackground: some ShapeStyle {
@@ -267,11 +304,7 @@ private struct MessageRow: View {
     }
 
     private var accessibilityText: Text {
-        if isUser {
-            return Text("You said, \(message.text)")
-        } else {
-            return Text("Coach said, \(message.text)")
-        }
+        Text("\(displayName) said, \(message.text)")
     }
 }
 
