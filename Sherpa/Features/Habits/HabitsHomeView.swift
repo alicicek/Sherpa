@@ -680,6 +680,7 @@ struct HabitTileModel {
 struct HabitTile: View {
     let model: HabitTileModel
     @Binding var progress: Double
+    var onDragStateChange: (Bool) -> Void = { _ in }
     var onProgressChange: (Double) -> Void
 
     @State private var isDragging: Bool = false
@@ -795,6 +796,7 @@ struct HabitTile: View {
                         return
                     }
                     isDragging = true
+                    onDragStateChange(true)
                     dragStartProgress = progress
                     hasCelebratedCompletion = progress >= model.goal - 0.0001
                 }
@@ -846,6 +848,7 @@ struct HabitTile: View {
                 }
 
                 isDragging = false
+                onDragStateChange(false)
 
                 withAnimation(.easeOut(duration: 0.2)) {
                     displayProgress = progress
