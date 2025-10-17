@@ -67,7 +67,9 @@ final class CoachViewModel: ObservableObject {
             workItem = DispatchWorkItem { [weak self] in
                 guard let self, let workItem else { return }
 
-                if index == 0 {
+                let isLastBubble = index == response.count - 1
+
+                if isLastBubble {
                     self.isCoachTyping = false
                 }
 
@@ -84,14 +86,15 @@ final class CoachViewModel: ObservableObject {
             }
         }
 
-        let typingReset = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.isCoachTyping = false
+        if let lastBubbleDelay = response.indices.last {
+            let totalDelay = leadDelay + bubbleSpacing * Double(lastBubbleDelay + 1)
+            let typingReset = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.isCoachTyping = false
+            }
+            pendingResponseWorkItems.append(typingReset)
+            DispatchQueue.main.asyncAfter(deadline: .now() + totalDelay, execute: typingReset)
         }
-        pendingResponseWorkItems.append(typingReset)
-
-        let totalDelay = leadDelay + bubbleSpacing * Double(response.count)
-        DispatchQueue.main.asyncAfter(deadline: .now() + totalDelay, execute: typingReset)
     }
 
     private func cancelPendingResponses() {
