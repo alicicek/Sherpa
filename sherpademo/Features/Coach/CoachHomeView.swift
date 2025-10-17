@@ -240,7 +240,7 @@ private struct MessageRow: View {
     private var messageAlignment: Alignment { isUser ? .trailing : .leading }
     private var contentAlignment: HorizontalAlignment { isUser ? .trailing : .leading }
     private var avatarBackgroundColor: Color { Color(red: 0.96, green: 0.93, blue: 0.86) }
-    private var avatarBorderColor: Color { Color.sherpaTextSecondary.opacity(0.25) }
+    private var avatarBorderColor: Color { Color.sherpaPrimary.opacity(0.5) }
 
     var body: some View {
         HStack(alignment: .bottom, spacing: DesignTokens.Spacing.sm) {
@@ -279,10 +279,10 @@ private struct MessageRow: View {
             Image(avatarAssetName)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 46, height: 46)
+                .frame(width: 40, height: 40)
                 .clipShape(Circle())
         }
-        .frame(width: 46, height: 46)
+        .frame(width: 40, height: 40)
         .overlay(
             Circle()
                 .stroke(avatarBorderColor, lineWidth: 1)
