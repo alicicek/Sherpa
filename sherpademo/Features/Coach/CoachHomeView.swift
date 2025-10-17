@@ -255,7 +255,6 @@ private struct MessageRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: messageAlignment)
-        .padding(.horizontal, DesignTokens.Spacing.sm)
     }
 
     private var messageContent: some View {
@@ -311,7 +310,6 @@ private struct TypingIndicatorRow: View {
             Spacer(minLength: DesignTokens.Spacing.lg)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, DesignTokens.Spacing.sm)
     }
 }
 
