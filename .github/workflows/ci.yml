@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  build-and-test:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
+      - name: Install tooling
+        run: |
+          brew install swiftlint swiftformat
+      - name: Lint & format
+        run: |
+          swiftformat --lint .
+          swiftlint --strict
+      - name: Build & test with sanitizers
+        run: |
+          xcodebuild -scheme "Sherpa" -destination 'platform=iOS Simulator,name=iPhone 15' -configuration Debug clean build test \
+            OTHER_SWIFT_FLAGS="-warnings-as-errors" \
+            ENABLE_THREAD_SANITIZER=YES \
+            ENABLE_ADDRESS_SANITIZER=YES
+
+  codeql:
+    runs-on: macos-14
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: swift
+      - name: Build for CodeQL
+        run: |
+          xcodebuild -scheme "Sherpa" -destination 'generic/platform=iOS Simulator' -configuration Debug clean build
+      - uses: github/codeql-action/analyze@v3

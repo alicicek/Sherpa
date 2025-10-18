@@ -6,52 +6,80 @@
 //
 
 import CoreData
+import OSLog
 
+@MainActor
 struct PersistenceController {
-    static let shared = PersistenceController()
-
-    @MainActor
-    static let preview: PersistenceController = {
-        let result = PersistenceController(inMemory: true)
-        let viewContext = result.container.viewContext
-        for _ in 0..<10 {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-        }
+    static let shared: PersistenceController = {
         do {
-            try viewContext.save()
+            return try PersistenceController()
         } catch {
-            // Replace this implementation with code to handle the error appropriately.
-            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            let nsError = error as NSError
-            fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            Logger.persistence.critical("Falling back to transient persistence: \(error.localizedDescription, privacy: .public)")
+            return PersistenceController(disabledDueTo: error)
         }
-        return result
+    }()
+
+    static let preview: PersistenceController = {
+        do {
+            let controller = try PersistenceController(inMemory: true)
+            let viewContext = controller.container.viewContext
+            for _ in 0..<10 {
+                let newItem = Item(context: viewContext)
+                newItem.timestamp = Date()
+            }
+            do {
+                try viewContext.save()
+            } catch {
+                Logger.persistence.error("Failed to save preview context: \(error.localizedDescription, privacy: .public)")
+            }
+            return controller
+        } catch {
+            Logger.persistence.error("Unable to set up preview persistence store: \(error.localizedDescription, privacy: .public)")
+            return PersistenceController(disabledDueTo: error)
+        }
     }()
 
     let container: NSPersistentContainer
+    private(set) var loadError: Error?
 
-    init(inMemory: Bool = false) {
+    private init(disabledDueTo error: Error?) {
+        container = NSPersistentContainer(name: "Sherpa")
+        loadError = error
+    }
+
+    init(inMemory: Bool = false) throws {
         container = NSPersistentContainer(name: "Sherpa")
         if inMemory {
-            container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
-        }
-        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
-            if let error = error as NSError? {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-
-                /*
-                 Typical reasons for an error here include:
-                 * The parent directory does not exist, cannot be created, or disallows writing.
-                 * The persistent store is not accessible, due to permissions or data protection when the device is locked.
-                 * The device is out of space.
-                 * The store could not be migrated to the current model version.
-                 Check the error message to determine what the actual problem was.
-                 */
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+            if let description = container.persistentStoreDescriptions.first {
+                description.url = URL(fileURLWithPath: "/dev/null")
+            } else {
+                Logger.persistence.error("Missing persistent store description when configuring in-memory store")
             }
-        })
+        }
+
+        var capturedError: Error?
+        container.loadPersistentStores { _, error in
+            if let error {
+                capturedError = error
+                Logger.persistence.critical("Persistent store failed to load: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+
         container.viewContext.automaticallyMergesChangesFromParent = true
+        loadError = capturedError
+
+        if let capturedError {
+            throw capturedError
+        }
+    }
+
+    func saveIfNeeded() {
+        let context = container.viewContext
+        guard context.hasChanges else { return }
+        do {
+            try context.save()
+        } catch {
+            Logger.persistence.error("Failed to save persistence context: \(error.localizedDescription, privacy: .public)")
+        }
     }
 }

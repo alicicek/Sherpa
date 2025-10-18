@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+                9A0E0BC02F3A0B1A00A12345 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9A0E0BBE2F3A0B1A00A12345 /* PrivacyInfo.xcprivacy */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		95B1F5532E9FDD5D00777560 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -26,7 +30,8 @@
 /* Begin PBXFileReference section */
 		95B1F5402E9FDD5C00777560 /* Sherpa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sherpa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95B1F5522E9FDD5D00777560 /* SherpaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		95B1F55C2E9FDD5D00777560 /* SherpaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+                95B1F55C2E9FDD5D00777560 /* SherpaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+                9A0E0BBE2F3A0B1A00A12345 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -208,13 +213,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		95B1F53E2E9FDD5C00777560 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+                95B1F53E2E9FDD5C00777560 /* Resources */ = {
+                        isa = PBXResourcesBuildPhase;
+                        buildActionMask = 2147483647;
+                        files = (
+                                9A0E0BC02F3A0B1A00A12345 /* PrivacyInfo.xcprivacy in Resources */,
+                        );
+                        runOnlyForDeploymentPostprocessing = 0;
+                };
 		95B1F5502E9FDD5D00777560 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -328,8 +334,9 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                                SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+                                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                                SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Debug;
 		};
@@ -385,8 +392,9 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				VALIDATE_PRODUCT = YES;
+                                SWIFT_COMPILATION_MODE = wholemodule;
+                                SWIFT_STRICT_CONCURRENCY = complete;
+                                VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -418,7 +426,8 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+                                SWIFT_STRICT_CONCURRENCY = complete;
+                                SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -451,7 +460,8 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+                                SWIFT_STRICT_CONCURRENCY = complete;
+                                SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -472,7 +482,8 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+                                SWIFT_STRICT_CONCURRENCY = complete;
+                                SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sherpa.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sherpa";
 			};
@@ -494,7 +505,8 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+                                SWIFT_STRICT_CONCURRENCY = complete;
+                                SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sherpa.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sherpa";
 			};
@@ -514,7 +526,8 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+                                SWIFT_STRICT_CONCURRENCY = complete;
+                                SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Sherpa;
 			};
@@ -533,8 +546,9 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+                                SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+                                SWIFT_STRICT_CONCURRENCY = complete;
+                                SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Sherpa;
 			};

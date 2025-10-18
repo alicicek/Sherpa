@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 
 /// Generates HabitInstance rows for the supplied date range ensuring the UI has concrete items to display.
+@MainActor
 struct ScheduleService {
     let context: ModelContext
 
@@ -16,6 +17,9 @@ struct ScheduleService {
         let normalizedStart = startDate.startOfDay
         let normalizedEnd = endDate.startOfDay
         guard normalizedEnd >= normalizedStart else { return }
+
+        let scheduleDays = Self.scheduleDays(from: normalizedStart, to: normalizedEnd)
+        guard scheduleDays.isEmpty == false else { return }
 
         let habitsDescriptor = FetchDescriptor<Habit>(
             predicate: #Predicate { !$0.isArchived },
@@ -29,50 +33,60 @@ struct ScheduleService {
         let habits = try context.fetch(habitsDescriptor)
         let tasks = try context.fetch(taskDescriptor)
 
-        var cursor = normalizedStart
-        while cursor <= normalizedEnd {
-            try ensureInstances(for: habits, on: cursor)
-            try ensureInstances(for: tasks, on: cursor)
-            cursor = cursor.adding(days: 1)
-        }
+        ensureHabitInstances(for: habits, on: scheduleDays)
+        ensureTaskInstances(for: tasks, on: scheduleDays)
 
         if context.hasChanges {
             try context.save()
         }
     }
 
-    private func ensureInstances(for habits: [Habit], on date: Date) throws {
+    private func ensureHabitInstances(for habits: [Habit], on scheduleDays: [Date]) {
         for habit in habits {
-            guard habit.recurrenceRule.occurs(on: date) else { continue }
-            if habit.instances.contains(where: { $0.date == date.startOfDay }) {
-                continue
+            var scheduledDates = Set(habit.instances.map { $0.date.startOfDay })
+
+            for day in scheduleDays where habit.recurrenceRule.occurs(on: day) {
+                if scheduledDates.insert(day).inserted {
+                    let instance = HabitInstance(date: day, habit: habit, task: nil)
+                    context.insert(instance)
+                    habit.instances.append(instance)
+                }
             }
-            let instance = HabitInstance(date: date, habit: habit, task: nil)
-            context.insert(instance)
-            habit.instances.append(instance)
         }
     }
 
-    private func ensureInstances(for tasks: [Task], on date: Date) throws {
+    private func ensureTaskInstances(for tasks: [Task], on scheduleDays: [Date]) {
         for task in tasks {
-            let normalizedDate = date.startOfDay
-            var shouldCreate = false
+            var scheduledDates = Set(task.instances.map { $0.date.startOfDay })
 
-            if let recurrence = task.recurrenceRule {
-                shouldCreate = recurrence.occurs(on: normalizedDate)
-            } else if let dueDate = task.dueDate {
-                shouldCreate = dueDate == normalizedDate
+            for day in scheduleDays {
+                let shouldCreate: Bool
+                if let recurrence = task.recurrenceRule {
+                    shouldCreate = recurrence.occurs(on: day)
+                } else if let dueDate = task.dueDate {
+                    shouldCreate = dueDate == day
+                } else {
+                    shouldCreate = false
+                }
+
+                guard shouldCreate else { continue }
+
+                if scheduledDates.insert(day).inserted {
+                    let instance = HabitInstance(date: day, habit: nil, task: task)
+                    context.insert(instance)
+                    task.instances.append(instance)
+                }
             }
-
-            guard shouldCreate else { continue }
-
-            if task.instances.contains(where: { $0.date == normalizedDate }) {
-                continue
-            }
-
-            let instance = HabitInstance(date: normalizedDate, habit: nil, task: task)
-            context.insert(instance)
-            task.instances.append(instance)
         }
+    }
+
+    private static func scheduleDays(from start: Date, to end: Date) -> [Date] {
+        var cursor = start
+        var result: [Date] = []
+        while cursor <= end {
+            result.append(cursor)
+            cursor = cursor.adding(days: 1)
+        }
+        return result
     }
 }
