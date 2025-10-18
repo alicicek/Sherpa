@@ -10,6 +10,10 @@ on:
 jobs:
   build-and-test:
     runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, thread]
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
@@ -22,12 +26,20 @@ jobs:
         run: |
           swiftformat --lint .
           swiftlint --strict
-      - name: Build & test with sanitizers
+      - name: Build & test with ${{ matrix.sanitizer }} sanitizer
         run: |
+          if [ "${{ matrix.sanitizer }}" = "address" ]; then
+            ENABLE_ADDRESS=YES
+            ENABLE_THREAD=NO
+          else
+            ENABLE_ADDRESS=NO
+            ENABLE_THREAD=YES
+          fi
+
           xcodebuild -scheme "Sherpa" -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -configuration Debug clean build test \
             OTHER_SWIFT_FLAGS="-warnings-as-errors" \
-            ENABLE_THREAD_SANITIZER=YES \
-            ENABLE_ADDRESS_SANITIZER=YES
+            ENABLE_ADDRESS_SANITIZER=$ENABLE_ADDRESS \
+            ENABLE_THREAD_SANITIZER=$ENABLE_THREAD
 
   codeql:
     runs-on: macos-26
