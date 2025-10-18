@@ -21,13 +21,14 @@ struct StartupFailureView: View {
                     .multilineTextAlignment(.center)
             }
 
-            Button(action: {
-                onRetry()
-            }) {
-                Text("Try Again")
-                    .font(.body.bold())
-                    .frame(maxWidth: .infinity)
-            }
+            Button(
+                action: { onRetry() },
+                label: {
+                    Text("Try Again")
+                        .font(.body.bold())
+                        .frame(maxWidth: .infinity)
+                }
+            )
             .buttonStyle(.borderedProminent)
             .accessibilityIdentifier("startup-retry-button")
         }

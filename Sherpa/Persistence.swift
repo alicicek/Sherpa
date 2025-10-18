@@ -14,7 +14,9 @@ struct PersistenceController {
         do {
             return try PersistenceController()
         } catch {
-            Logger.persistence.critical("Falling back to transient persistence: \(error.localizedDescription, privacy: .public)")
+            Logger.persistence.critical(
+                "Falling back to transient persistence: \(error.localizedDescription, privacy: .public)"
+            )
             return PersistenceController(disabledDueTo: error)
         }
     }()
@@ -30,11 +32,15 @@ struct PersistenceController {
             do {
                 try viewContext.save()
             } catch {
-                Logger.persistence.error("Failed to save preview context: \(error.localizedDescription, privacy: .public)")
+                Logger.persistence.error(
+                    "Failed to save preview context: \(error.localizedDescription, privacy: .public)"
+                )
             }
             return controller
         } catch {
-            Logger.persistence.error("Unable to set up preview persistence store: \(error.localizedDescription, privacy: .public)")
+            Logger.persistence.error(
+                "Unable to set up preview persistence store: \(error.localizedDescription, privacy: .public)"
+            )
             return PersistenceController(disabledDueTo: error)
         }
     }()
@@ -53,7 +59,9 @@ struct PersistenceController {
             if let description = container.persistentStoreDescriptions.first {
                 description.url = URL(fileURLWithPath: "/dev/null")
             } else {
-                Logger.persistence.error("Missing persistent store description when configuring in-memory store")
+                Logger.persistence.error(
+                    "Missing persistent store description when configuring in-memory store"
+                )
             }
         }
 
@@ -61,7 +69,9 @@ struct PersistenceController {
         container.loadPersistentStores { _, error in
             if let error {
                 capturedError = error
-                Logger.persistence.critical("Persistent store failed to load: \(error.localizedDescription, privacy: .public)")
+                Logger.persistence.critical(
+                    "Persistent store failed to load: \(error.localizedDescription, privacy: .public)"
+                )
             }
         }
 
@@ -79,7 +89,9 @@ struct PersistenceController {
         do {
             try context.save()
         } catch {
-            Logger.persistence.error("Failed to save persistence context: \(error.localizedDescription, privacy: .public)")
+            Logger.persistence.error(
+                "Failed to save persistence context: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 }

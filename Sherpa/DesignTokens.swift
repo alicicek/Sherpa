@@ -10,6 +10,40 @@ import SwiftUI
 /// Shared design system constants sourced from the Sherpa PRD.
 enum DesignTokens {
     enum Colors {
+        struct NeutralPalette {
+            let g1: Color
+            let g2: Color
+            let g3: Color
+            let g4: Color
+            let g5: Color
+            let g6: Color
+            let g7: Color
+            let g8: Color
+            let g9: Color
+
+            init(
+                g1: Color,
+                g2: Color,
+                g3: Color,
+                g4: Color,
+                g5: Color,
+                g6: Color,
+                g7: Color,
+                g8: Color,
+                g9: Color
+            ) {
+                self.g1 = g1
+                self.g2 = g2
+                self.g3 = g3
+                self.g4 = g4
+                self.g5 = g5
+                self.g6 = g6
+                self.g7 = g7
+                self.g8 = g8
+                self.g9 = g9
+            }
+        }
+
         static let primary = Color(hex: "#58B62F")
         static let accentBlue = Color(hex: "#46A8E0")
         static let accentGold = Color(hex: "#F5C34D")
@@ -21,7 +55,7 @@ enum DesignTokens {
         static let success = Color(hex: "#2FAE60")
         static let warning = Color(hex: "#E85C4A")
 
-        static let neutral: (g1: Color, g2: Color, g3: Color, g4: Color, g5: Color, g6: Color, g7: Color, g8: Color, g9: Color) = (
+        static let neutral = NeutralPalette(
             g1: Color(hex: "#F6F7F8"),
             g2: Color(hex: "#EDEFF1"),
             g3: Color(hex: "#DFE3E6"),

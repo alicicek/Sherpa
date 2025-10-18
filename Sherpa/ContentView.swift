@@ -96,12 +96,15 @@ private struct TabPlaceholderView: View {
                             .padding(.horizontal, DesignTokens.Spacing.lg)
                     }
 
-                    Button(action: {}) {
-                        Label("Coming Soon", systemImage: "sparkles")
-                            .font(.body.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: 44) // Apple HIG minimum touch target.
-                    }
+                    Button(
+                        action: {},
+                        label: {
+                            Label("Coming Soon", systemImage: "sparkles")
+                                .font(.body.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: 44) // Apple HIG minimum touch target.
+                        }
+                    )
                     .buttonStyle(.borderedProminent)
                     .tint(Color.sherpaPrimary)
                     .disabled(true)

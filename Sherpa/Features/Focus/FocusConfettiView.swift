@@ -42,8 +42,8 @@ struct FocusConfettiView: View {
                     if timeFactor < 0 { continue }
 
                     let normalized = min(1.0, max(0.0, timeFactor) / max(0.001, duration - stagger))
-                    let x = size.width * base + cos((elapsed + base) * 5.3) * 36
-                    let y = normalized * travelHeight - 40
+                    let horizontalOffset = size.width * base + cos((elapsed + base) * 5.3) * 36
+                    let verticalOffset = normalized * travelHeight - 40
 
                     let opacityFactor: Double
                     if elapsed > fadeOutStart {
@@ -56,7 +56,7 @@ struct FocusConfettiView: View {
                     var particleContext = context
                     particleContext.opacity = opacityFactor
 
-                    let rect = CGRect(x: x - 3, y: y - 6, width: 6, height: 12)
+                    let rect = CGRect(x: horizontalOffset - 3, y: verticalOffset - 6, width: 6, height: 12)
                     let path = Path(roundedRect: rect, cornerRadius: 2)
                     particleContext.fill(path, with: .color(baseColor))
                 }

@@ -377,16 +377,23 @@ private struct CoachComposer: View {
                     }
                 }
 
-            Button(action: onSend) {
-                Image(systemName: "paperplane.fill")
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.sherpaTextSecondary.opacity(0.25) : Color.sherpaPrimary)
-                    )
-            }
+            Button(
+                action: onSend,
+                label: {
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(
+                                    text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                        ? Color.sherpaTextSecondary.opacity(0.25)
+                                        : Color.sherpaPrimary
+                                )
+                        )
+                }
+            )
             .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .padding(.horizontal, DesignTokens.Spacing.lg)

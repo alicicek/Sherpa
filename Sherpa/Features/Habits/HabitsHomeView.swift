@@ -79,7 +79,8 @@ struct HabitsHomeView: View {
                             EmptyStateView()
                         } else {
                             VStack(spacing: DesignTokens.Spacing.md) {
-                                ForEach(todaysItems.enumerated().map({ $0 }), id: \.element.id) { index, instance in
+                                ForEach(todaysItems.indices, id: \.self) { index in
+                                    let instance = todaysItems[index]
                                     let profile = habitProfile(for: instance, colorIndex: index)
                                     let model = tileModel(for: instance, profile: profile)
                                     HabitTile(
@@ -369,7 +370,10 @@ private extension HabitsHomeView {
         // Placeholder persistence hook. Replace with Supabase integration.
         let percent = profile.goal > 0 ? Int((progress / profile.goal) * 100) : 0
         Logger.habits.debug(
-            "Saved progress for \(instance.displayName, privacy: .private): \(Int(progress), privacy: .public)/\(Int(profile.goal), privacy: .public) \(profile.unit, privacy: .private) (\(percent, privacy: .public)% done)"
+            "Saved progress for \(instance.displayName, privacy: .private): "
+                + "\(Int(progress), privacy: .public)/\(Int(profile.goal), privacy: .public) "
+                + "\(profile.unit, privacy: .private) "
+                + "(\(percent, privacy: .public)% done)"
         )
     }
 
@@ -1000,25 +1004,28 @@ private struct AddHabitsButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            ZStack {
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
-                    .fill(Color(hex: "#2F7C1B"))
-                    .offset(y: 4)
-                    .opacity(0.9)
+        Button(
+            action: action,
+            label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                        .fill(Color(hex: "#2F7C1B"))
+                        .offset(y: 4)
+                        .opacity(0.9)
 
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
-                    .fill(Color(hex: "#58B62F"))
+                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                        .fill(Color(hex: "#58B62F"))
 
-                Text("ADD HABITS")
-                    .font(.system(.headline, design: .rounded).weight(.bold))
-                    .foregroundStyle(Color.white)
-                    .kerning(1.1)
+                    Text("ADD HABITS")
+                        .font(.system(.headline, design: .rounded).weight(.bold))
+                        .foregroundStyle(Color.white)
+                        .kerning(1.1)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .shadow(color: Color.black.opacity(0.08), radius: 6, y: 3)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 54)
-            .shadow(color: Color.black.opacity(0.08), radius: 6, y: 3)
-        }
+        )
         .buttonStyle(PressedScaleButtonStyle())
         .accessibilityLabel("Add a new habit")
     }

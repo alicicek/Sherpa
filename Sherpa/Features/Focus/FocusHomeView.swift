@@ -31,39 +31,10 @@ private extension FocusHomeView {
     @ViewBuilder
     func buildContent(safeAreaInsets: EdgeInsets) -> some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: DesignTokens.Spacing.xl + DesignTokens.Spacing.lg) {
-                    VStack(spacing: DesignTokens.Spacing.lg) {
-                        phaseHeader
-                        progressDots
-                        timerDisplay
-                        primaryControlButton
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    secondaryControls
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, DesignTokens.Spacing.lg)
-                .padding(.top, safeAreaInsets.top + DesignTokens.Spacing.xl)
-                .padding(.bottom, safeAreaInsets.bottom + DesignTokens.Spacing.xl)
-            }
-            .scrollIndicators(.hidden)
-            .background(Color(.systemBackground).ignoresSafeArea())
-            .overlay {
-                FocusConfettiView(trigger: confettiTrigger)
-                    .allowsHitTesting(false)
-            }
-            .overlay(alignment: .top) {
-                if celebrateBadgeVisible {
-                    celebrationBadge
-                        .transition(.opacity)
-                        .padding(.top, DesignTokens.Spacing.xl)
-                }
-            }
-            .navigationTitle("Focus")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .navigationBar)
+            focusScrollContent(safeAreaInsets: safeAreaInsets)
+                .navigationTitle("Focus")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
             rewardedSessionCount = viewModel.totalFocusSessions
@@ -80,6 +51,40 @@ private extension FocusHomeView {
                 showCelebrationBadge()
             } else {
                 confettiTrigger += 1
+            }
+        }
+    }
+
+    @ViewBuilder
+    func focusScrollContent(safeAreaInsets: EdgeInsets) -> some View {
+        ScrollView {
+            VStack(spacing: DesignTokens.Spacing.xl + DesignTokens.Spacing.lg) {
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    phaseHeader
+                    progressDots
+                    timerDisplay
+                    primaryControlButton
+                }
+                .frame(maxWidth: .infinity)
+
+                secondaryControls
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, DesignTokens.Spacing.lg)
+            .padding(.top, safeAreaInsets.top + DesignTokens.Spacing.xl)
+            .padding(.bottom, safeAreaInsets.bottom + DesignTokens.Spacing.xl)
+        }
+        .scrollIndicators(.hidden)
+        .background(Color(.systemBackground).ignoresSafeArea())
+        .overlay {
+            FocusConfettiView(trigger: confettiTrigger)
+                .allowsHitTesting(false)
+        }
+        .overlay(alignment: .top) {
+            if celebrateBadgeVisible {
+                celebrationBadge
+                    .transition(.opacity)
+                    .padding(.top, DesignTokens.Spacing.xl)
             }
         }
     }
@@ -227,7 +232,10 @@ private extension FocusHomeView {
     }
 
     func fillColor(for index: Int) -> Color {
-        index < viewModel.completedSessionsInCycle ? DesignTokens.Colors.primary : Color.sherpaTextSecondary.opacity(0.15)
+        if index < viewModel.completedSessionsInCycle {
+            return DesignTokens.Colors.primary
+        }
+        return Color.sherpaTextSecondary.opacity(0.15)
     }
 
     var primaryControlIconName: String {

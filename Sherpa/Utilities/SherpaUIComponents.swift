@@ -142,7 +142,13 @@ struct SherpaChip<Content: View>: View {
         switch style {
         case .neutral:
             if isSelected {
-                return AnyShapeStyle(LinearGradient(colors: [DesignTokens.Colors.primary, DesignTokens.Colors.accentBlue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                return AnyShapeStyle(
+                    LinearGradient(
+                        colors: [DesignTokens.Colors.primary, DesignTokens.Colors.accentBlue],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
             } else {
                 return AnyShapeStyle(Color.white.opacity(0.9))
             }
@@ -153,7 +159,13 @@ struct SherpaChip<Content: View>: View {
                 return AnyShapeStyle(color.opacity(0.22))
             }
         case .gradient(let colors):
-            return AnyShapeStyle(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+            return AnyShapeStyle(
+                LinearGradient(
+                    colors: colors,
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
         }
     }
 
@@ -182,7 +194,7 @@ struct SherpaChip<Content: View>: View {
 
 struct SherpaBadge: View {
     enum Kind {
-        case xp
+        case xpReward
         case streak
         case neutral
     }
@@ -211,7 +223,7 @@ struct SherpaBadge: View {
 
     private var backgroundColor: Color {
         switch kind {
-        case .xp: return DesignTokens.Colors.accentGold
+        case .xpReward: return DesignTokens.Colors.accentGold
         case .streak: return DesignTokens.Colors.primary
         case .neutral: return DesignTokens.Colors.accentPurple
         }
