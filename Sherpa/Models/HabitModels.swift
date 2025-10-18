@@ -71,6 +71,7 @@ final class RecurrenceRule {
     /// Weekday values 1...7 (Calendar weekday index). Used for weekly rules.
     var weekdays: [Int]
 
+    @MainActor
     init(
         frequency: RecurrenceFrequency = .daily,
         interval: Int = 1,
@@ -84,6 +85,7 @@ final class RecurrenceRule {
     }
 
     /// Returns true if the rule results in an occurrence for the supplied date.
+    @MainActor
     func occurs(on date: Date) -> Bool {
         let normalizedDate = date.startOfDay
         guard normalizedDate >= startDate else { return false }
@@ -188,6 +190,7 @@ final class Task {
     @Relationship(deleteRule: .nullify)
     var recurrenceRule: RecurrenceRule?
 
+    @MainActor
     init(
         title: String,
         detail: String? = nil,
@@ -233,6 +236,7 @@ final class HabitInstance {
     @Relationship var habit: Habit?
     @Relationship var task: Task?
 
+    @MainActor
     init(date: Date, status: CompletionState = .pending, note: String? = nil, habit: Habit? = nil, task: Task? = nil) {
         self.date = date.startOfDay
         self.status = status
