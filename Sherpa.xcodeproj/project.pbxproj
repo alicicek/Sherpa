@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+                82A44FE032A84BA0B78AAD65 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6A9A4CA5C9664867B1430B1B /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -27,9 +28,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		95B1F5402E9FDD5C00777560 /* Sherpa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sherpa.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		95B1F5522E9FDD5D00777560 /* SherpaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+                95B1F5402E9FDD5C00777560 /* Sherpa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sherpa.app; sourceTree = BUILT_PRODUCTS_DIR; };
+                95B1F5522E9FDD5D00777560 /* SherpaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
                 95B1F55C2E9FDD5D00777560 /* SherpaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+                6A9A4CA5C9664867B1430B1B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = file.xcprivacy; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -215,6 +217,7 @@
                         isa = PBXResourcesBuildPhase;
                         buildActionMask = 2147483647;
                         files = (
+                                82A44FE032A84BA0B78AAD65 /* PrivacyInfo.xcprivacy in Resources */,
                         );
                         runOnlyForDeploymentPostprocessing = 0;
                 };
