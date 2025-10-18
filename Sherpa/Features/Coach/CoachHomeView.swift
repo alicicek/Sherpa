@@ -206,15 +206,15 @@ private struct ConversationListView: View {
             .onTapGesture {
                 onBackgroundTap()
             }
-            .onChange(of: messages) { _ in
+            .onChange(of: messages) {
                 scrollToBottom(proxy)
             }
-            .onChange(of: isCoachTyping) { newValue in
+            .onChange(of: isCoachTyping) { _, newValue in
                 if newValue {
                     scrollToBottom(proxy)
                 }
             }
-            .onChange(of: keyboardHeight) { newValue in
+            .onChange(of: keyboardHeight) { _, newValue in
                 if newValue > 0 {
                     scrollToBottom(proxy)
                 }
@@ -226,7 +226,7 @@ private struct ConversationListView: View {
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             withAnimation(.easeInOut(duration: 0.3)) {
                 proxy.scrollTo(bottomAnchorId, anchor: .bottom)
             }
@@ -432,7 +432,7 @@ private final class KeyboardObserver: ObservableObject {
                 guard
                     let userInfo = notification.userInfo,
                     let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
-                    let windowScene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+                    let windowScene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first
                 else {
                     currentHeight = 0
                     return
