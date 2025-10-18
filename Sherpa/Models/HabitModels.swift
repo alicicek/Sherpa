@@ -135,8 +135,10 @@ final class RecurrenceRule {
         components.year = year
         components.month = month
         let calendar = Calendar.current
-        guard let date = calendar.date(from: components),
-              let range = calendar.range(of: .day, in: .month, for: date) else {
+        guard
+            let date = calendar.date(from: components),
+            let range = calendar.range(of: .day, in: .month, for: date)
+        else {
             return 30
         }
         return range.count

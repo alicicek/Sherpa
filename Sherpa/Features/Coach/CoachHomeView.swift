@@ -442,9 +442,9 @@ private final class KeyboardObserver: ObservableObject {
 }
 
 private func hideKeyboard() {
-#if canImport(UIKit)
-    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-#endif
+    #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    #endif
 }
 
 private extension Array {
