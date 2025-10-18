@@ -115,15 +115,9 @@ struct HabitsHomeView: View {
                     .padding(.vertical, DesignTokens.Spacing.xl)
                 }
             }
-            .task {
+            .task(id: selectedDate) {
                 adjustCalendarWindowIfNeeded(for: selectedDate)
-                await ensureScheduleForVisibleRange()
-            }
-            .onChange(of: selectedDate) { newValue in
-                adjustCalendarWindowIfNeeded(for: newValue)
-                Task { @MainActor [newValue] in
-                    await ensureScheduleForVisibleRange(centeredOn: newValue)
-                }
+                await ensureScheduleForVisibleRange(centeredOn: selectedDate)
             }
             .sheet(isPresented: $showingAddSheet) {
                 AddRoutineSheet(isPresented: $showingAddSheet, onComplete: handleAddItem)
@@ -259,7 +253,7 @@ private extension HabitsHomeView {
     }
 
     func handleAddItem() {
-        Task { @MainActor in
+        _Concurrency.Task { @MainActor in
             await ensureScheduleForVisibleRange()
         }
     }
