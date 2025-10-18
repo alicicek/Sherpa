@@ -180,9 +180,9 @@ extension View {
     /// Applies a playful card styling used throughout the Sherpa UI.
     func sherpaCardStyle(
         background: some ShapeStyle = Color.white,
-        padding: CGFloat = DesignTokens.Spacing.lg
+        contentPadding: CGFloat = DesignTokens.Spacing.lg
     ) -> some View {
-        padding(padding)
+        padding(contentPadding)
             .background(
                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous)
                     .fill(background)
