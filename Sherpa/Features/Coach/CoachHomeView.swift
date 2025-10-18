@@ -425,9 +425,7 @@ private final class KeyboardObserver: ObservableObject {
                 guard
                     let userInfo = notification.userInfo,
                     let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
-                    let windowScene = UIApplication.shared.connectedScenes
-                        .compactMap { $0 as? UIWindowScene }
-                        .first
+                    let windowScene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
                 else {
                     self.currentHeight = 0
                     return
