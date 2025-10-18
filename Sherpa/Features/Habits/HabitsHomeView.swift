@@ -5,8 +5,8 @@
 //  Created by Codex on 15/10/2025.
 //
 
-import SwiftData
 import OSLog
+import SwiftData
 import SwiftUI
 import UIKit
 
@@ -79,7 +79,7 @@ struct HabitsHomeView: View {
                             EmptyStateView()
                         } else {
                             VStack(spacing: DesignTokens.Spacing.md) {
-                                ForEach(todaysItems.enumerated().map({ $0 }), id: \.element.id) { index, instance in
+                                ForEach(todaysItems.enumerated().map { $0 }, id: \.element.id) { index, instance in
                                     let profile = habitProfile(for: instance, colorIndex: index)
                                     let model = tileModel(for: instance, profile: profile)
                                     HabitTile(
@@ -188,7 +188,7 @@ private extension HabitsHomeView {
 
     var calendarDates: [Date] {
         let start = calendarWindowStart
-        return (0...(calendarSpan * 2)).map { offset in
+        return (0 ... (calendarSpan * 2)).map { offset in
             start.adding(days: offset)
         }
     }
@@ -398,7 +398,6 @@ private extension HabitsHomeView {
             backgroundColor: profile.background
         )
     }
-
 }
 
 private enum AdaptiveStepCalculator {
@@ -441,7 +440,7 @@ private struct HabitsHeroCard: View {
             LinearGradient(
                 colors: [
                     Color.white.opacity(0.85),
-                    Color.white.opacity(0.0)
+                    Color.white.opacity(0.0),
                 ],
                 startPoint: .top,
                 endPoint: .center
@@ -889,11 +888,11 @@ struct HabitTile: View {
             let iterations = min(abs(delta), 6)
 
             if delta > 0 {
-                for _ in 0..<iterations {
+                for _ in 0 ..< iterations {
                     mediumFeedback.impactOccurred()
                 }
             } else {
-                for _ in 0..<iterations {
+                for _ in 0 ..< iterations {
                     lightFeedback.impactOccurred()
                 }
             }
@@ -941,7 +940,7 @@ struct HabitTileDemoView: View {
         HabitProgressItem(title: "Drink Water", subtitle: "Hydration", icon: "💧", unit: "ml", goal: 3000, step: 250, accentColor: Color(hex: "#28A6FF"), backgroundColor: Color(hex: "#DFF1FF"), current: 1350),
         HabitProgressItem(title: "Eat 100g Protein", subtitle: "Nutrition", icon: "🍗", unit: "g", goal: 400, step: 25, accentColor: Color(hex: "#68E08C"), backgroundColor: Color(hex: "#E5FBEA"), current: 370),
         HabitProgressItem(title: "Morning Walk", subtitle: "Movement", icon: "🚶", unit: "steps", goal: 8000, step: 500, accentColor: Color(hex: "#FF914D"), backgroundColor: Color(hex: "#FFE9D8"), current: 4500),
-        HabitProgressItem(title: "Meditate", subtitle: "Mindfulness", icon: "🧘", unit: "min", goal: 20, step: 5, accentColor: Color(hex: "#BA8CFF"), backgroundColor: Color(hex: "#F2E7FF"), current: 10)
+        HabitProgressItem(title: "Meditate", subtitle: "Mindfulness", icon: "🧘", unit: "min", goal: 20, step: 5, accentColor: Color(hex: "#BA8CFF"), backgroundColor: Color(hex: "#F2E7FF"), current: 10),
     ]
 
     var body: some View {
@@ -1078,7 +1077,7 @@ private struct AddRoutineSheet: View {
     @State private var frequency: RecurrenceFrequency = .daily
     @State private var interval: Int = 1
     @State private var selectedWeekdays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
-    @State private var dueDate: Date = Date()
+    @State private var dueDate = Date()
 
     private var suggestions: [Suggestion] {
         switch itemKind {
@@ -1086,13 +1085,13 @@ private struct AddRoutineSheet: View {
             return [
                 Suggestion(title: "Morning stretch", detail: "5 minute warm-up", frequency: .daily, weekdays: nil),
                 Suggestion(title: "Deep tidy", detail: "30m reset", frequency: .weekly, weekdays: [.saturday]),
-                Suggestion(title: "Drink water", detail: "Hydrate before coffee", frequency: .daily, weekdays: nil)
+                Suggestion(title: "Drink water", detail: "Hydrate before coffee", frequency: .daily, weekdays: nil),
             ]
         case .task:
             return [
                 Suggestion(title: "Submit assignment", detail: "Wrap before midnight", frequency: .daily, weekdays: nil),
                 Suggestion(title: "Meal prep", detail: "Sunday planning", frequency: .weekly, weekdays: [.sunday]),
-                Suggestion(title: "Budget review", detail: "Payday check-in", frequency: .monthly, weekdays: nil)
+                Suggestion(title: "Budget review", detail: "Payday check-in", frequency: .monthly, weekdays: nil),
             ]
         }
     }
@@ -1150,7 +1149,7 @@ private struct AddRoutineSheet: View {
                             )
 
                         TextField("Notes (optional)", text: $detail, axis: .vertical)
-                            .lineLimit(2...4)
+                            .lineLimit(2 ... 4)
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
@@ -1169,7 +1168,7 @@ private struct AddRoutineSheet: View {
                             }
                             .pickerStyle(.segmented)
 
-                            Stepper(value: $interval, in: 1...30) {
+                            Stepper(value: $interval, in: 1 ... 30) {
                                 Text("Every \(interval) \(frequency == .weekly ? "week(s)" : frequency == .monthly ? "month(s)" : "day(s)")")
                             }
 
@@ -1302,7 +1301,7 @@ private struct SkipNoteSheet: View {
             Form {
                 Section("Reason for skipping") {
                     TextField("Type your note…", text: $note, axis: .vertical)
-                        .lineLimit(3...5)
+                        .lineLimit(3 ... 5)
                 }
             }
             .navigationTitle("Skip with note")

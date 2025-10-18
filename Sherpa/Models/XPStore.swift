@@ -5,8 +5,8 @@
 //  Created by Codex on 20/10/2025.
 //
 
-import Foundation
 import Combine
+import Foundation
 
 /// Lightweight persistence wrapper tracking the player's accumulated XP.
 @MainActor
@@ -19,7 +19,7 @@ final class XPStore: ObservableObject {
     init(userDefaults: UserDefaults = .standard) {
         self.defaults = userDefaults
         let persisted = userDefaults.object(forKey: xpKey) as? Int ?? 0
-        self.totalXP = persisted
+        totalXP = persisted
     }
 
     /// Adds positive XP and persists the aggregate total.

@@ -46,7 +46,7 @@ struct SherpaCard<Content: View>: View {
                     .fill(fillStyle)
             )
             .overlay {
-                if let strokeColor {
+                if let strokeColor = strokeColor {
                     RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous)
                         .stroke(strokeColor.opacity(strokeOpacity), lineWidth: 1)
                 }
@@ -56,11 +56,11 @@ struct SherpaCard<Content: View>: View {
 
     private var fillStyle: AnyShapeStyle {
         switch backgroundStyle {
-        case .solid(let color):
+        case let .solid(color):
             return AnyShapeStyle(color)
-        case .gradient(let gradient):
+        case let .gradient(gradient):
             return AnyShapeStyle(gradient)
-        case .palette(let colors):
+        case let .palette(colors):
             let resolved = LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
             return AnyShapeStyle(resolved)
         }
@@ -74,7 +74,6 @@ enum SherpaChipStyle {
 }
 
 struct SherpaChip<Content: View>: View {
-
     private let style: SherpaChipStyle
     private let isSelected: Bool
     private let content: Content
@@ -120,7 +119,7 @@ struct SherpaChip<Content: View>: View {
 
     @ViewBuilder
     private var chipLabel: some View {
-        if let font {
+        if let font = font {
             content.font(font)
         } else {
             content
@@ -131,7 +130,7 @@ struct SherpaChip<Content: View>: View {
         switch style {
         case .neutral:
             return isSelected ? Color.white : Color.sherpaTextPrimary
-        case .accent(let color):
+        case let .accent(color):
             return isSelected ? Color.white : color
         case .gradient:
             return Color.white
@@ -146,13 +145,13 @@ struct SherpaChip<Content: View>: View {
             } else {
                 return AnyShapeStyle(Color.white.opacity(0.9))
             }
-        case .accent(let color):
+        case let .accent(color):
             if isSelected {
                 return AnyShapeStyle(color)
             } else {
                 return AnyShapeStyle(color.opacity(0.22))
             }
-        case .gradient(let colors):
+        case let .gradient(colors):
             return AnyShapeStyle(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
         }
     }
@@ -161,7 +160,7 @@ struct SherpaChip<Content: View>: View {
         switch style {
         case .neutral:
             return isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.3)
-        case .accent(let color):
+        case let .accent(color):
             return color.opacity(isSelected ? 0.6 : 0.35)
         case .gradient:
             return Color.white.opacity(isSelected ? 0.8 : 0.4)
@@ -172,9 +171,9 @@ struct SherpaChip<Content: View>: View {
         switch style {
         case .neutral:
             return isSelected ? DesignTokens.Colors.primary.opacity(0.28) : Color.black.opacity(0.08)
-        case .accent(let color):
+        case let .accent(color):
             return color.opacity(isSelected ? 0.4 : 0.12)
-        case .gradient(let colors):
+        case let .gradient(colors):
             return colors.last?.opacity(0.32) ?? Color.black.opacity(0.12)
         }
     }
@@ -193,7 +192,7 @@ struct SherpaBadge: View {
 
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.xs) {
-            if let icon {
+            if let icon = icon {
                 Text(icon)
             }
             Text(text.uppercased())

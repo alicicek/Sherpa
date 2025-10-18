@@ -52,14 +52,14 @@ struct SherpaApp: App {
         do {
             let container = try ModelContainer(
                 for: Habit.self,
-                    Task.self,
-                    HabitInstance.self,
-                    RecurrenceRule.self
+                Task.self,
+                HabitInstance.self,
+                RecurrenceRule.self
             )
             return (container, nil)
         } catch {
             Logger.startup.critical("Failed to initialise model container: \(error.localizedDescription, privacy: .public)")
-            return (nil, StartupIssue(message: Self.startupFailureMessage(for: error)))
+            return (nil, StartupIssue(message: startupFailureMessage(for: error)))
         }
     }
 

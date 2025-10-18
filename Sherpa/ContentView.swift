@@ -28,10 +28,10 @@ struct ContentView: View {
                 .tag(AppTab.habits)
 
             FocusHomeView()
-            .tabItem {
-                Label("Focus", systemImage: "binoculars")
-            }
-            .tag(AppTab.focus)
+                .tabItem {
+                    Label("Focus", systemImage: "binoculars")
+                }
+                .tag(AppTab.focus)
 
             CoachHomeView()
                 .tabItem {
@@ -44,20 +44,20 @@ struct ContentView: View {
                 message: "Review weekly progress, heatmaps, and patterns to stay motivated.",
                 illustrationSymbol: "chart.bar.doc.horizontal"
             )
-            .tabItem {
-                Label("Insights", systemImage: "chart.bar.doc.horizontal")
-            }
-            .tag(AppTab.insights)
+                .tabItem {
+                    Label("Insights", systemImage: "chart.bar.doc.horizontal")
+                }
+                .tag(AppTab.insights)
 
             TabPlaceholderView(
                 title: "Leaderboard",
                 message: "Climb from Hilltop to Everest as you compete with friends each week.",
                 illustrationSymbol: "mountain.2"
             )
-            .tabItem {
-                Label("Leaderboard", systemImage: "mountain.2")
-            }
-            .tag(AppTab.leaderboard)
+                .tabItem {
+                    Label("Leaderboard", systemImage: "mountain.2")
+                }
+                .tag(AppTab.leaderboard)
         }
         .tint(.sherpaPrimary)
     }

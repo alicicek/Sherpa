@@ -21,17 +21,17 @@ final class CoachViewModel: ObservableObject {
         [
             "Love that energy!",
             "Remember: tiny wins count just as much as the big swings.",
-            "Want help lining up one small action for today?"
+            "Want help lining up one small action for today?",
         ],
         [
             "Totally hear you.",
             "Let’s zoom into the next hour instead of the whole day.",
-            "What’s one thing you could wrap up before you take a break?"
+            "What’s one thing you could wrap up before you take a break?",
         ],
         [
             "You’re building momentum, even if it doesn’t feel like it yet.",
-            "How about we celebrate one win you’ve had this week?"
-        ]
+            "How about we celebrate one win you’ve had this week?",
+        ],
     ]
 
     init() {
@@ -102,14 +102,12 @@ final class CoachViewModel: ObservableObject {
         pendingResponseWorkItems.removeAll()
         isCoachTyping = false
     }
-
-
     private func seedConversation() {
         messages = [
             CoachMessage(text: "Hey, I’m Summit — your Sherpa coach.", role: .coach),
             CoachMessage(text: "Here for pep-talks, quick nudges, and the occasional reality check.", role: .coach),
             CoachMessage(text: "What’s on your mind today?", role: .coach),
-            CoachMessage(text: "Just exploring the app right now!", role: .user)
+            CoachMessage(text: "Just exploring the app right now!", role: .user),
         ]
     }
 }
@@ -321,7 +319,7 @@ private struct TypingBubble: View {
 
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.xs) {
-            ForEach(0..<3) { index in
+            ForEach(0 ..< 3) { index in
                 Circle()
                     .fill(Color.sherpaTextSecondary.opacity(0.6))
                     .frame(width: 8, height: 8)
@@ -361,7 +359,7 @@ private struct CoachComposer: View {
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.sm) {
             TextField("Type a message", text: $text, axis: .vertical)
-                .lineLimit(1...3)
+                .lineLimit(1 ... 3)
                 .textFieldStyle(.plain)
                 .padding(.horizontal, DesignTokens.Spacing.md)
                 .padding(.vertical, DesignTokens.Spacing.sm)
@@ -426,8 +424,9 @@ private final class KeyboardObserver: ObservableObject {
                 guard let userInfo = notification.userInfo,
                       let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
                       let windowScene = UIApplication.shared.connectedScenes
-                        .compactMap({ $0 as? UIWindowScene })
-                        .first else {
+                          .compactMap { $0 as? UIWindowScene }
+                          .first
+                else {
                     self.currentHeight = 0
                     return
                 }
