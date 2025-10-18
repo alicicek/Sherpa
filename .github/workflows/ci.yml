@@ -24,7 +24,7 @@ jobs:
           swiftlint --strict
       - name: Build & test with sanitizers
         run: |
-          xcodebuild -scheme "Sherpa" -destination 'platform=iOS Simulator,OS=18.0,name=iPhone 17 Pro' -configuration Debug clean build test \
+          xcodebuild -scheme "Sherpa" -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -configuration Debug clean build test \
             OTHER_SWIFT_FLAGS="-warnings-as-errors" \
             ENABLE_THREAD_SANITIZER=YES \
             ENABLE_ADDRESS_SANITIZER=YES
