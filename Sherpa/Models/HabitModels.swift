@@ -18,9 +18,9 @@ enum RecurrenceFrequency: String, Codable, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .daily: return "Daily"
-        case .weekly: return "Weekly"
-        case .monthly: return "Monthly"
+        case .daily: "Daily"
+        case .weekly: "Weekly"
+        case .monthly: "Monthly"
         }
     }
 }
@@ -39,25 +39,25 @@ enum Weekday: Int, CaseIterable, Identifiable {
 
     var shortSymbol: String {
         switch self {
-        case .sunday: return "Su"
-        case .monday: return "Mo"
-        case .tuesday: return "Tu"
-        case .wednesday: return "We"
-        case .thursday: return "Th"
-        case .friday: return "Fr"
-        case .saturday: return "Sa"
+        case .sunday: "Su"
+        case .monday: "Mo"
+        case .tuesday: "Tu"
+        case .wednesday: "We"
+        case .thursday: "Th"
+        case .friday: "Fr"
+        case .saturday: "Sa"
         }
     }
 
     var longName: String {
         switch self {
-        case .sunday: return "Sunday"
-        case .monday: return "Monday"
-        case .tuesday: return "Tuesday"
-        case .wednesday: return "Wednesday"
-        case .thursday: return "Thursday"
-        case .friday: return "Friday"
-        case .saturday: return "Saturday"
+        case .sunday: "Sunday"
+        case .monday: "Monday"
+        case .tuesday: "Tuesday"
+        case .wednesday: "Wednesday"
+        case .thursday: "Thursday"
+        case .friday: "Friday"
+        case .saturday: "Saturday"
         }
     }
 }
@@ -268,7 +268,7 @@ enum StreakCalculator {
         }
         guard eligibleInstances.isEmpty == false else { return false }
 
-        let completedCount = eligibleInstances.filter { $0.status == .completed }.count
+        let completedCount = eligibleInstances.count(where: { $0.status == .completed })
         let threshold = max(1, Int(ceil(Double(eligibleInstances.count) * 0.4)))
         return completedCount >= threshold
     }

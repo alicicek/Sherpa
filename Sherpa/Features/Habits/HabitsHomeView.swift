@@ -30,7 +30,7 @@ private struct HabitTileProfile {
 
 struct HabitsHomeView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedDate: Date = Date().startOfDay
+    @State private var selectedDate: Date = .init().startOfDay
     @State private var showingAddSheet = false
     @State private var skipNoteTarget: HabitInstance?
     @State private var calendarWindowStart: Date
@@ -157,7 +157,7 @@ private extension HabitsHomeView {
     }
 
     var completedCount: Int {
-        todaysItems.filter { $0.status == .completed }.count
+        todaysItems.count(where: { $0.status == .completed })
     }
 
     var eligibleHabitCount: Int {
@@ -172,11 +172,11 @@ private extension HabitsHomeView {
     var leagueTitle: String {
         switch completionProgress {
         case 0.75...:
-            return "Summit League"
+            "Summit League"
         case 0.4...:
-            return "Hilltop League"
+            "Hilltop League"
         default:
-            return "Hilltop League"
+            "Hilltop League"
         }
     }
 
@@ -205,7 +205,7 @@ private extension HabitsHomeView {
 
         for (date, items) in grouped {
             let eligibleItems = items.filter { $0.status != .skippedWithNote }
-            let completedCount = eligibleItems.filter { $0.status == .completed }.count
+            let completedCount = eligibleItems.count(where: { $0.status == .completed })
             let eligibleCount = eligibleItems.count
 
             guard eligibleCount > 0 else {
@@ -408,17 +408,17 @@ private enum AdaptiveStepCalculator {
     static func stepSize(for goal: Double) -> Double {
         switch goal {
         case ..<20:
-            return 1
+            1
         case ..<200:
-            return 5
+            5
         case ..<1000:
-            return 10
+            10
         case ..<5000:
-            return 50
+            50
         case ..<10000:
-            return 100
+            100
         default:
-            return 250
+            250
         }
     }
 }
@@ -485,7 +485,7 @@ private struct CalendarStripView: View {
     private let calendar = Calendar.current
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hasPerformedInitialScroll = false
-    @State private var lastSelectedDate: Date = Date().startOfDay
+    @State private var lastSelectedDate: Date = .init().startOfDay
     private let defaultAnchor = UnitPoint(x: 0.78, y: 0.5)
     private let pastAnchor = UnitPoint(x: 0.82, y: 0.5)
     private let futureAnchor = UnitPoint(x: 0.18, y: 0.5)
@@ -1051,15 +1051,15 @@ private struct AddRoutineSheet: View {
 
         var label: String {
             switch self {
-            case .habit: return "Habit"
-            case .task: return "Task"
+            case .habit: "Habit"
+            case .task: "Task"
             }
         }
 
         var icon: String {
             switch self {
-            case .habit: return "flame.fill"
-            case .task: return "checkmark.circle.fill"
+            case .habit: "flame.fill"
+            case .task: "checkmark.circle.fill"
             }
         }
     }
@@ -1089,13 +1089,13 @@ private struct AddRoutineSheet: View {
     private var suggestions: [Suggestion] {
         switch itemKind {
         case .habit:
-            return [
+            [
                 Suggestion(title: "Morning stretch", detail: "5 minute warm-up", frequency: .daily, weekdays: nil),
                 Suggestion(title: "Deep tidy", detail: "30m reset", frequency: .weekly, weekdays: [.saturday]),
                 Suggestion(title: "Drink water", detail: "Hydrate before coffee", frequency: .daily, weekdays: nil),
             ]
         case .task:
-            return [
+            [
                 Suggestion(title: "Submit assignment", detail: "Wrap before midnight", frequency: .daily, weekdays: nil),
                 Suggestion(title: "Meal prep", detail: "Sunday planning", frequency: .weekly, weekdays: [.sunday]),
                 Suggestion(title: "Budget review", detail: "Payday check-in", frequency: .monthly, weekdays: nil),
@@ -1183,7 +1183,7 @@ private struct AddRoutineSheet: View {
                                 WeekdaySelectionView(selected: $selectedWeekdays)
                             }
 
-                            if itemKind == .task && frequency == .daily {
+                            if itemKind == .task, frequency == .daily {
                                 DatePicker("Due Date", selection: $dueDate, displayedComponents: [.date])
                             }
                         }

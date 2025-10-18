@@ -43,7 +43,7 @@ struct ScheduleService {
 
     private func ensureHabitInstances(for habits: [Habit], on scheduleDays: [Date]) {
         for habit in habits {
-            var scheduledDates = Set(habit.instances.map { $0.date.startOfDay })
+            var scheduledDates = Set(habit.instances.map(\.date).map(\.startOfDay))
 
             for day in scheduleDays where habit.recurrenceRule.occurs(on: day) {
                 if scheduledDates.insert(day).inserted {
@@ -57,16 +57,15 @@ struct ScheduleService {
 
     private func ensureTaskInstances(for tasks: [Task], on scheduleDays: [Date]) {
         for task in tasks {
-            var scheduledDates = Set(task.instances.map { $0.date.startOfDay })
+            var scheduledDates = Set(task.instances.map(\.date).map(\.startOfDay))
 
             for day in scheduleDays {
-                let shouldCreate: Bool
-                if let recurrence = task.recurrenceRule {
-                    shouldCreate = recurrence.occurs(on: day)
+                let shouldCreate = if let recurrence = task.recurrenceRule {
+                    recurrence.occurs(on: day)
                 } else if let dueDate = task.dueDate {
-                    shouldCreate = dueDate == day
+                    dueDate == day
                 } else {
-                    shouldCreate = false
+                    false
                 }
 
                 guard shouldCreate else { continue }

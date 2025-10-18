@@ -70,11 +70,11 @@ final class CoachViewModel: ObservableObject {
                 let isLastBubble = index == response.count - 1
 
                 if isLastBubble {
-                    self.isCoachTyping = false
+                    isCoachTyping = false
                 }
 
-                self.messages.append(CoachMessage(text: bubble, role: .coach))
-                self.pendingResponseWorkItems.removeAll { $0 === workItem }
+                messages.append(CoachMessage(text: bubble, role: .coach))
+                pendingResponseWorkItems.removeAll { $0 === workItem }
             }
 
             if let workItem {
@@ -90,7 +90,7 @@ final class CoachViewModel: ObservableObject {
             let totalDelay = leadDelay + bubbleSpacing * Double(lastBubbleDelay + 1)
             let typingReset = DispatchWorkItem { [weak self] in
                 guard let self else { return }
-                self.isCoachTyping = false
+                isCoachTyping = false
             }
             pendingResponseWorkItems.append(typingReset)
             DispatchQueue.main.asyncAfter(deadline: .now() + totalDelay, execute: typingReset)
@@ -294,9 +294,9 @@ private struct MessageRow: View {
 
     private var messageBackground: some ShapeStyle {
         if isUser {
-            return Color.sherpaPrimary
+            Color.sherpaPrimary
         } else {
-            return Color.white
+            Color.white
         }
     }
 
@@ -434,13 +434,13 @@ private final class KeyboardObserver: ObservableObject {
                     let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
                     let windowScene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
                 else {
-                    self.currentHeight = 0
+                    currentHeight = 0
                     return
                 }
 
                 let screenHeight = windowScene.screen.bounds.height
                 let overlap = max(0, screenHeight - endFrame.origin.y)
-                self.currentHeight = overlap
+                currentHeight = overlap
             }
             .store(in: &cancellables)
     }

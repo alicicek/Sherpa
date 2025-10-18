@@ -46,7 +46,7 @@ struct SherpaCard<Content: View>: View {
                     .fill(fillStyle)
             )
             .overlay {
-                if let strokeColor = strokeColor {
+                if let strokeColor {
                     RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous)
                         .stroke(strokeColor.opacity(strokeOpacity), lineWidth: 1)
                 }
@@ -119,7 +119,7 @@ struct SherpaChip<Content: View>: View {
 
     @ViewBuilder
     private var chipLabel: some View {
-        if let font = font {
+        if let font {
             content.font(font)
         } else {
             content
@@ -129,11 +129,11 @@ struct SherpaChip<Content: View>: View {
     private var foregroundColor: Color {
         switch style {
         case .neutral:
-            return isSelected ? Color.white : Color.sherpaTextPrimary
+            isSelected ? Color.white : Color.sherpaTextPrimary
         case let .accent(color):
-            return isSelected ? Color.white : color
+            isSelected ? Color.white : color
         case .gradient:
-            return Color.white
+            Color.white
         }
     }
 
@@ -141,7 +141,7 @@ struct SherpaChip<Content: View>: View {
         switch style {
         case .neutral:
             if isSelected {
-                return AnyShapeStyle(
+                AnyShapeStyle(
                     LinearGradient(
                         colors: [DesignTokens.Colors.primary, DesignTokens.Colors.accentBlue],
                         startPoint: .topLeading,
@@ -149,16 +149,16 @@ struct SherpaChip<Content: View>: View {
                     )
                 )
             } else {
-                return AnyShapeStyle(Color.white.opacity(0.9))
+                AnyShapeStyle(Color.white.opacity(0.9))
             }
         case let .accent(color):
             if isSelected {
-                return AnyShapeStyle(color)
+                AnyShapeStyle(color)
             } else {
-                return AnyShapeStyle(color.opacity(0.22))
+                AnyShapeStyle(color.opacity(0.22))
             }
         case let .gradient(colors):
-            return AnyShapeStyle(
+            AnyShapeStyle(
                 LinearGradient(
                     colors: colors,
                     startPoint: .topLeading,
@@ -168,6 +168,7 @@ struct SherpaChip<Content: View>: View {
         }
     }
 
+    // swiftformat:disable redundantReturn
     private var borderColor: Color {
         switch style {
         case .neutral:
@@ -189,6 +190,7 @@ struct SherpaChip<Content: View>: View {
             return colors.last?.opacity(0.32) ?? Color.black.opacity(0.12)
         }
     }
+    // swiftformat:enable redundantReturn
 }
 
 struct SherpaBadge: View {
@@ -204,7 +206,7 @@ struct SherpaBadge: View {
 
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.xs) {
-            if let icon = icon {
+            if let icon {
                 Text(icon)
             }
             Text(text.uppercased())
@@ -222,9 +224,12 @@ struct SherpaBadge: View {
 
     private var backgroundColor: Color {
         switch kind {
-        case .xpReward: return DesignTokens.Colors.accentGold
-        case .streak: return DesignTokens.Colors.primary
-        case .neutral: return DesignTokens.Colors.accentPurple
+        case .xpReward:
+            DesignTokens.Colors.accentGold
+        case .streak:
+            DesignTokens.Colors.primary
+        case .neutral:
+            DesignTokens.Colors.accentPurple
         }
     }
 }

@@ -9,41 +9,41 @@ import SwiftUI
 
 /// Shared design system constants sourced from the Sherpa PRD.
 enum DesignTokens {
-    enum Colors {
-        struct NeutralPalette {
-            let g1: Color
-            let g2: Color
-            let g3: Color
-            let g4: Color
-            let g5: Color
-            let g6: Color
-            let g7: Color
-            let g8: Color
-            let g9: Color
+    struct NeutralPalette {
+        let g1: Color
+        let g2: Color
+        let g3: Color
+        let g4: Color
+        let g5: Color
+        let g6: Color
+        let g7: Color
+        let g8: Color
+        let g9: Color
 
-            init(
-                g1: Color,
-                g2: Color,
-                g3: Color,
-                g4: Color,
-                g5: Color,
-                g6: Color,
-                g7: Color,
-                g8: Color,
-                g9: Color
-            ) {
-                self.g1 = g1
-                self.g2 = g2
-                self.g3 = g3
-                self.g4 = g4
-                self.g5 = g5
-                self.g6 = g6
-                self.g7 = g7
-                self.g8 = g8
-                self.g9 = g9
-            }
+        init(
+            g1: Color,
+            g2: Color,
+            g3: Color,
+            g4: Color,
+            g5: Color,
+            g6: Color,
+            g7: Color,
+            g8: Color,
+            g9: Color
+        ) {
+            self.g1 = g1
+            self.g2 = g2
+            self.g3 = g3
+            self.g4 = g4
+            self.g5 = g5
+            self.g6 = g6
+            self.g7 = g7
+            self.g8 = g8
+            self.g9 = g9
         }
+    }
 
+    enum Colors {
         static let primary = Color(hex: "#58B62F")
         static let accentBlue = Color(hex: "#46A8E0")
         static let accentGold = Color(hex: "#F5C34D")
@@ -178,8 +178,8 @@ extension Color {
 
 extension View {
     /// Applies a playful card styling used throughout the Sherpa UI.
-    func sherpaCardStyle<S: ShapeStyle>(
-        background: S = Color.white,
+    func sherpaCardStyle(
+        background: some ShapeStyle = Color.white,
         padding: CGFloat = DesignTokens.Spacing.lg
     ) -> some View {
         padding(padding)
@@ -191,8 +191,8 @@ extension View {
     }
 
     /// Applies a subtle raised capsule style used for pills and chips.
-    func sherpaPillStyle<S: ShapeStyle>(
-        background: S = Color.white,
+    func sherpaPillStyle(
+        background: some ShapeStyle = Color.white,
         stroke: Color = Color.white.opacity(0.3)
     ) -> some View {
         padding(.horizontal, DesignTokens.Spacing.md)

@@ -61,7 +61,7 @@ struct SherpaApp: App {
             Logger.startup.critical(
                 "Failed to initialise model container: \(error.localizedDescription, privacy: .public)"
             )
-            return (nil, StartupIssue(message: Self.startupFailureMessage(for: error)))
+            return (nil, StartupIssue(message: startupFailureMessage(for: error)))
         }
     }
 
