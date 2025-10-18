@@ -6,9 +6,9 @@
 //
 
 import Foundation
+@testable import Sherpa
 import SwiftData
 import Testing
-@testable import Sherpa
 
 struct SherpaTests {
     private func makeInMemoryContext() throws -> ModelContext {

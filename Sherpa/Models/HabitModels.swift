@@ -109,10 +109,11 @@ final class RecurrenceRule {
             let calendar = Calendar.current
             let startComponents = calendar.dateComponents([.day], from: startDate)
             let currentComponents = calendar.dateComponents([.month, .year, .day], from: normalizedDate)
-            guard let targetDay = startComponents.day,
-                  let currentDay = currentComponents.day,
-                  let month = currentComponents.month,
-                  let year = currentComponents.year
+            guard
+                let targetDay = startComponents.day,
+                let currentDay = currentComponents.day,
+                let month = currentComponents.month,
+                let year = currentComponents.year
             else {
                 return false
             }
