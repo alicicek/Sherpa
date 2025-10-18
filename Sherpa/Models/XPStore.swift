@@ -17,7 +17,7 @@ final class XPStore: ObservableObject {
     private let xpKey = "com.sherpa.user.totalXP"
 
     init(userDefaults: UserDefaults = .standard) {
-        self.defaults = userDefaults
+        defaults = userDefaults
         let persisted = userDefaults.object(forKey: xpKey) as? Int ?? 0
         totalXP = persisted
     }

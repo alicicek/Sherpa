@@ -102,6 +102,7 @@ final class CoachViewModel: ObservableObject {
         pendingResponseWorkItems.removeAll()
         isCoachTyping = false
     }
+
     private func seedConversation() {
         messages = [
             CoachMessage(text: "Hey, I’m Summit — your Sherpa coach.", role: .coach),
@@ -421,11 +422,12 @@ private final class KeyboardObserver: ObservableObject {
             .sink { [weak self] notification in
                 guard let self else { return }
 
-                guard let userInfo = notification.userInfo,
-                      let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
-                      let windowScene = UIApplication.shared.connectedScenes
-                          .compactMap { $0 as? UIWindowScene }
-                          .first
+                guard
+                    let userInfo = notification.userInfo,
+                    let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+                    let windowScene = UIApplication.shared.connectedScenes
+                        .compactMap { $0 as? UIWindowScene }
+                        .first
                 else {
                     self.currentHeight = 0
                     return
@@ -440,9 +442,9 @@ private final class KeyboardObserver: ObservableObject {
 }
 
 private func hideKeyboard() {
-#if canImport(UIKit)
-    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-#endif
+    #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    #endif
 }
 
 private extension Array {
