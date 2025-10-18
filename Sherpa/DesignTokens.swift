@@ -73,7 +73,7 @@ enum DesignTokens {
         [Colors.accentGold, Colors.accentOrange],
         [Colors.accentPink, Colors.accentPurple],
         [Colors.accentMint, Colors.accentBlue],
-        [Colors.accentPurple, Colors.accentGold]
+        [Colors.accentPurple, Colors.accentGold],
     ]
 
     enum CornerRadius {
@@ -97,7 +97,7 @@ enum DesignTokens {
             colors: [
                 Color(hex: "#F4FFE0"),
                 Color(hex: "#DDF8FF"),
-                Color.white
+                Color.white,
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -107,7 +107,7 @@ enum DesignTokens {
             colors: [
                 Colors.primary.opacity(0.35),
                 Colors.accentBlue.opacity(0.35),
-                Colors.accentPink.opacity(0.3)
+                Colors.accentPink.opacity(0.3),
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -116,7 +116,7 @@ enum DesignTokens {
         static let night = LinearGradient(
             colors: [
                 Color(hex: "#0D1126"),
-                Color(hex: "#1A2552")
+                Color(hex: "#1A2552"),
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -182,8 +182,7 @@ extension View {
         background: S = Color.white,
         padding: CGFloat = DesignTokens.Spacing.lg
     ) -> some View {
-        self
-            .padding(padding)
+        padding(padding)
             .background(
                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous)
                     .fill(background)
@@ -196,8 +195,7 @@ extension View {
         background: S = Color.white,
         stroke: Color = Color.white.opacity(0.3)
     ) -> some View {
-        self
-            .padding(.horizontal, DesignTokens.Spacing.md)
+        padding(.horizontal, DesignTokens.Spacing.md)
             .padding(.vertical, DesignTokens.Spacing.sm)
             .background(
                 Capsule(style: .continuous)

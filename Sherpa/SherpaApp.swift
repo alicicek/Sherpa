@@ -52,9 +52,9 @@ struct SherpaApp: App {
         do {
             let container = try ModelContainer(
                 for: Habit.self,
-                     Task.self,
-                     HabitInstance.self,
-                     RecurrenceRule.self
+                Task.self,
+                HabitInstance.self,
+                RecurrenceRule.self
             )
             return (container, nil)
         } catch {

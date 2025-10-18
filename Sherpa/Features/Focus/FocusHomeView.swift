@@ -88,6 +88,7 @@ private extension FocusHomeView {
             }
         }
     }
+
     var phaseHeader: some View {
         Text(viewModel.isInBreak ? "Break" : "Flow")
             .font(.system(.title3, design: .rounded).weight(.medium))
@@ -98,7 +99,7 @@ private extension FocusHomeView {
 
     var progressDots: some View {
         HStack(spacing: DesignTokens.Spacing.md) {
-            ForEach(0..<4, id: \.self) { index in
+            ForEach(0 ..< 4, id: \.self) { index in
                 Circle()
                     .fill(fillColor(for: index))
                     .frame(width: 12, height: 12)

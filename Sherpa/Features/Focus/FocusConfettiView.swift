@@ -26,7 +26,7 @@ struct FocusConfettiView: View {
 
                 guard elapsed <= duration else {
                     _Concurrency.Task { @MainActor in
-                        self.emissionDate = nil
+                        emissionDate = nil
                     }
                     return
                 }
@@ -35,7 +35,7 @@ struct FocusConfettiView: View {
                 let fadeOutStart = duration * 0.7
                 let baseColor = Color.yellow.opacity(reduceMotion ? 0.7 : 0.92)
 
-                for id in 0..<particleCount {
+                for id in 0 ..< particleCount {
                     let base = Double(id) / Double(particleCount)
                     let stagger = base * 0.4
                     let timeFactor = elapsed - stagger

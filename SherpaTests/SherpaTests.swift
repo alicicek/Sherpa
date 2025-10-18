@@ -6,19 +6,19 @@
 //
 
 import Foundation
+@testable import Sherpa
 import SwiftData
 import Testing
-@testable import Sherpa
 
 struct SherpaTests {
     private func makeInMemoryContext() throws -> ModelContext {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: Habit.self,
-                Task.self,
-                HabitInstance.self,
-                RecurrenceRule.self,
-                configurations: configuration
+            Task.self,
+            HabitInstance.self,
+            RecurrenceRule.self,
+            configurations: configuration
         )
         return ModelContext(container)
     }

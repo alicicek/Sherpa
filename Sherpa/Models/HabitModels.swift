@@ -109,10 +109,11 @@ final class RecurrenceRule {
             let calendar = Calendar.current
             let startComponents = calendar.dateComponents([.day], from: startDate)
             let currentComponents = calendar.dateComponents([.month, .year, .day], from: normalizedDate)
-            guard let targetDay = startComponents.day,
-                  let currentDay = currentComponents.day,
-                  let month = currentComponents.month,
-                  let year = currentComponents.year
+            guard
+                let targetDay = startComponents.day,
+                let currentDay = currentComponents.day,
+                let month = currentComponents.month,
+                let year = currentComponents.year
             else {
                 return false
             }
@@ -122,10 +123,10 @@ final class RecurrenceRule {
 
             if targetDay <= daysInMonth(year: year, month: month) {
                 return currentDay == targetDay
-            } else {
-                // If the start day is beyond the number of days in the month, schedule on the last day.
-                return currentDay == daysInMonth(year: year, month: month)
             }
+
+            // If the start day is beyond the number of days in the month, schedule on the last day.
+            return currentDay == daysInMonth(year: year, month: month)
         }
     }
 
@@ -134,8 +135,10 @@ final class RecurrenceRule {
         components.year = year
         components.month = month
         let calendar = Calendar.current
-        guard let date = calendar.date(from: components),
-              let range = calendar.range(of: .day, in: .month, for: date) else {
+        guard
+            let date = calendar.date(from: components),
+            let range = calendar.range(of: .day, in: .month, for: date)
+        else {
             return 30
         }
         return range.count
@@ -170,7 +173,7 @@ final class Habit {
         self.createdAt = createdAt
         self.colorHex = colorHex
         self.isArchived = isArchived
-        self.instances = []
+        instances = []
         self.recurrenceRule = recurrenceRule
     }
 }
@@ -204,7 +207,7 @@ final class Task {
         self.createdAt = createdAt
         self.dueDate = dueDate?.startOfDay
         self.isArchived = isArchived
-        self.instances = []
+        instances = []
         self.recurrenceRule = recurrenceRule
     }
 }
@@ -241,7 +244,7 @@ final class HabitInstance {
         self.date = date.startOfDay
         self.status = status
         self.note = note
-        self.completedAt = nil
+        completedAt = nil
         self.habit = habit
         self.task = task
     }
@@ -256,7 +259,7 @@ final class HabitInstance {
 }
 
 /// Simple utility responsible for determining streak eligibility.
-struct StreakCalculator {
+enum StreakCalculator {
     /// Returns whether the provided set of instances qualifies for streak credit.
     static func qualifiesForStreak(instances: [HabitInstance]) -> Bool {
         let eligibleInstances = instances.filter { instance in

@@ -28,10 +28,10 @@ struct ContentView: View {
                 .tag(AppTab.habits)
 
             FocusHomeView()
-            .tabItem {
-                Label("Focus", systemImage: "binoculars")
-            }
-            .tag(AppTab.focus)
+                .tabItem {
+                    Label("Focus", systemImage: "binoculars")
+                }
+                .tag(AppTab.focus)
 
             CoachHomeView()
                 .tabItem {
