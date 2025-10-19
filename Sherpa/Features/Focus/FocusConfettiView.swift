@@ -17,8 +17,8 @@ struct FocusConfettiView: View {
     private let activeDuration: Double = 2.2
 
     var body: some View {
-        TimelineView<AnimationTimelineSchedule, AnyView>(.animation(minimumInterval: 1.0 / 30.0), content: { timeline in
-            AnyView(Canvas { context, size in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+            Canvas { context, size in
                 guard let emissionDate else { return }
 
                 let elapsed = timeline.date.timeIntervalSince(emissionDate)
@@ -60,11 +60,11 @@ struct FocusConfettiView: View {
                     let path = Path(roundedRect: rect, cornerRadius: 2)
                     particleContext.fill(path, with: .color(baseColor))
                 }
-            })
-        })
+            }
+        }
         .allowsHitTesting(false)
         .opacity(emissionDate == nil ? 0 : 1)
-        .onChange(of: trigger) { newValue in
+        .onChange(of: trigger) { _, newValue in
             guard newValue > 0 else { return }
             emissionDate = Date()
         }

@@ -369,11 +369,13 @@ private extension HabitsHomeView {
     func saveProgress(for instance: HabitInstance, progress: Double, profile: HabitTileProfile) {
         // Placeholder persistence hook. Replace with Supabase integration.
         let percent = profile.goal > 0 ? Int((progress / profile.goal) * 100) : 0
+        let displayName = "\(instance.displayName, privacy: .private)"
+        let progressValue = "\(Int(progress), privacy: .public)/\(Int(profile.goal), privacy: .public)"
+        let unitDescription = "\(profile.unit, privacy: .private)"
+        let percentDescription = "\(percent, privacy: .public)%"
+
         Logger.habits.debug(
-            "Saved progress for \(instance.displayName, privacy: .private): "
-                + "\(Int(progress), privacy: .public)/\(Int(profile.goal), privacy: .public) "
-                + "\(profile.unit, privacy: .private) "
-                + "(\(percent, privacy: .public)% done)"
+            "Saved progress for \(displayName): \(progressValue) \(unitDescription) (\(percentDescription) done)"
         )
     }
 
@@ -519,7 +521,7 @@ private struct CalendarStripView: View {
                 lastSelectedDate = selectedDate
                 scrollToSelected(proxy: proxy, anchor: defaultAnchor, animated: false)
             }
-            .onChange(of: selectedDate) { newDate in
+            .onChange(of: selectedDate) { _, newDate in
                 let anchor = anchor(for: newDate, previous: lastSelectedDate)
                 lastSelectedDate = newDate
                 scrollToSelected(proxy: proxy, anchor: anchor)
@@ -547,7 +549,9 @@ private struct CalendarStripView: View {
             }
         }
 
-        DispatchQueue.main.async(execute: scrollAction)
+        Task { @MainActor in
+            scrollAction()
+        }
     }
 
     private func anchor(for newDate: Date, previous oldDate: Date) -> UnitPoint {
@@ -772,7 +776,7 @@ struct HabitTile: View {
             displayProgress = progress
             handleCompletionState(for: progress)
         }
-        .onChange(of: progress) { newValue in
+        .onChange(of: progress) { _, newValue in
             if isDragging == false {
                 withAnimation(.easeOut(duration: 0.18)) {
                     displayProgress = newValue
@@ -974,8 +978,13 @@ struct HabitTileDemoView: View {
 
     private func saveProgress(for item: HabitProgressItem, updatedValue: Double) {
         let percent = item.goal > 0 ? Int((updatedValue / item.goal) * 100) : 0
+        let title = "\(item.title, privacy: .private)"
+        let progressValue = "\(Int(updatedValue), privacy: .public)/\(Int(item.goal), privacy: .public)"
+        let unitDescription = "\(item.unit, privacy: .private)"
+        let percentDescription = "\(percent, privacy: .public)%"
+
         Logger.habits.debug(
-            "Demo progress for \(item.title, privacy: .private): \(Int(updatedValue), privacy: .public)/\(Int(item.goal), privacy: .public) \(item.unit, privacy: .private) (\(percent, privacy: .public)% done)"
+            "Demo progress for \(title): \(progressValue) \(unitDescription) (\(percentDescription) done)"
         )
     }
 }
