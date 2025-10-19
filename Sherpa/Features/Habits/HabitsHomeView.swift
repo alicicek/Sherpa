@@ -29,7 +29,7 @@ private struct HabitTileProfile {
 }
 
 @MainActor
-struct HabitsHomeView: View, Sendable {
+struct HabitsHomeView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate: Date = .init().startOfDay
     @State private var showingAddSheet = false

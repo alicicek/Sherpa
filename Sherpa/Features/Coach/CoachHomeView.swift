@@ -170,7 +170,7 @@ struct CoachHomeView: View {
 }
 
 @MainActor
-private struct ConversationListView: View, Sendable {
+private struct ConversationListView: View {
     private let bottomAnchorId = "conversation-bottom-anchor"
 
     let messages: [CoachMessage]
