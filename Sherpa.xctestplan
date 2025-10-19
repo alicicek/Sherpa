@@ -18,13 +18,6 @@
         "identifier" : "95B1F5512E9FDD5D00777560",
         "name" : "SherpaTests"
       }
-    },
-    {
-      "target" : {
-        "containerPath" : "container:Sherpa.xcodeproj",
-        "identifier" : "95B1F55B2E9FDD5D00777560",
-        "name" : "SherpaUITests"
-      }
     }
   ],
   "version" : 1

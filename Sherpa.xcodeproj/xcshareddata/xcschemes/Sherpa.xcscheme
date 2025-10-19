@@ -46,17 +46,6 @@
                ReferencedContainer = "container:Sherpa.xcodeproj">
             </BuildableReference>
          </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "95B1F55B2E9FDD5D00777560"
-               BuildableName = "SherpaUITests.xctest"
-               BlueprintName = "SherpaUITests"
-               ReferencedContainer = "container:Sherpa.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

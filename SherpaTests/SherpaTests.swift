@@ -10,6 +10,7 @@ import Foundation
 import SwiftData
 import Testing
 
+@MainActor
 struct SherpaTests {
     private func makeInMemoryContext() throws -> ModelContext {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)

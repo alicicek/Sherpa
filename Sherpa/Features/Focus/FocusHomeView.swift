@@ -42,7 +42,7 @@ private extension FocusHomeView {
         .onReceive(timer) { _ in
             viewModel.tick()
         }
-        .onChange(of: viewModel.totalFocusSessions) { _, newValue in
+        .onChange(of: viewModel.totalFocusSessions, initial: false) { @MainActor @Sendable (_: Int, newValue: Int) in
             guard newValue > rewardedSessionCount else { return }
             let delta = newValue - rewardedSessionCount
             rewardedSessionCount = newValue

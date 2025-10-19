@@ -28,7 +28,8 @@ private struct HabitTileProfile {
     let background: Color
 }
 
-struct HabitsHomeView: View {
+@MainActor
+struct HabitsHomeView: View, Sendable {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedDate: Date = .init().startOfDay
     @State private var showingAddSheet = false
@@ -369,14 +370,11 @@ private extension HabitsHomeView {
     func saveProgress(for instance: HabitInstance, progress: Double, profile: HabitTileProfile) {
         // Placeholder persistence hook. Replace with Supabase integration.
         let percent = profile.goal > 0 ? Int((progress / profile.goal) * 100) : 0
-        let displayName = "\(instance.displayName, privacy: .private)"
-        let progressValue = "\(Int(progress), privacy: .public)/\(Int(profile.goal), privacy: .public)"
-        let unitDescription = "\(profile.unit, privacy: .private)"
-        let percentDescription = "\(percent, privacy: .public)%"
-
-        Logger.habits.debug(
-            "Saved progress for \(displayName): \(progressValue) \(unitDescription) (\(percentDescription) done)"
-        )
+        let displayName = instance.displayName
+        let progressValue = "\(Int(progress))/\(Int(profile.goal))"
+        let unitDescription = profile.unit
+        let percentDescription = "\(percent)%"
+        Logger.habits.debug("Saved progress for \(displayName): \(progressValue) \(unitDescription) (\(percentDescription) done)")
     }
 
     func resetProgress(for instance: HabitInstance, profile: HabitTileProfile) {
@@ -487,7 +485,6 @@ private struct CalendarStripView: View {
     private let calendar = Calendar.current
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hasPerformedInitialScroll = false
-    @State private var lastSelectedDate: Date = .init().startOfDay
     private let defaultAnchor = UnitPoint(x: 0.78, y: 0.5)
     private let pastAnchor = UnitPoint(x: 0.82, y: 0.5)
     private let futureAnchor = UnitPoint(x: 0.18, y: 0.5)
@@ -518,39 +515,33 @@ private struct CalendarStripView: View {
             .onAppear {
                 guard !hasPerformedInitialScroll else { return }
                 hasPerformedInitialScroll = true
-                lastSelectedDate = selectedDate
-                scrollToSelected(proxy: proxy, anchor: defaultAnchor, animated: false)
+                scrollToSelected(date: selectedDate, proxy: proxy, anchor: defaultAnchor, animated: false)
             }
-            .onChange(of: selectedDate) { _, newDate in
-                let anchor = anchor(for: newDate, previous: lastSelectedDate)
-                lastSelectedDate = newDate
-                scrollToSelected(proxy: proxy, anchor: anchor)
+            .onChange(of: selectedDate, initial: false) { (previousDate: Date, newDate: Date) in
+                let anchor = anchor(for: newDate, previous: previousDate)
+                scrollToSelected(date: newDate, proxy: proxy, anchor: anchor)
             }
         }
     }
 
     private func scrollToSelected(
+        date: Date,
         proxy: ScrollViewProxy,
         anchor: UnitPoint,
         animated: Bool = true
     ) {
-        let performScroll = {
-            proxy.scrollTo(selectedDate.startOfDay, anchor: anchor)
-        }
+        let targetID = date.startOfDay
+        let shouldAnimate = animated && !reduceMotion
+        let animation = Animation.spring(response: 0.45, dampingFraction: 0.85, blendDuration: 0.15)
 
-        let scrollAction = {
-            if reduceMotion || !animated {
-                performScroll()
-            } else {
-                let animation = Animation.spring(response: 0.45, dampingFraction: 0.85, blendDuration: 0.15)
+        DispatchQueue.main.async {
+            if shouldAnimate {
                 withAnimation(animation) {
-                    performScroll()
+                    proxy.scrollTo(targetID, anchor: anchor)
                 }
+            } else {
+                proxy.scrollTo(targetID, anchor: anchor)
             }
-        }
-
-        Task { @MainActor in
-            scrollAction()
         }
     }
 
@@ -776,7 +767,7 @@ struct HabitTile: View {
             displayProgress = progress
             handleCompletionState(for: progress)
         }
-        .onChange(of: progress) { _, newValue in
+        .onChange(of: progress, initial: false) { @MainActor @Sendable (_: Double, newValue: Double) in
             if isDragging == false {
                 withAnimation(.easeOut(duration: 0.18)) {
                     displayProgress = newValue
@@ -978,13 +969,8 @@ struct HabitTileDemoView: View {
 
     private func saveProgress(for item: HabitProgressItem, updatedValue: Double) {
         let percent = item.goal > 0 ? Int((updatedValue / item.goal) * 100) : 0
-        let title = "\(item.title, privacy: .private)"
-        let progressValue = "\(Int(updatedValue), privacy: .public)/\(Int(item.goal), privacy: .public)"
-        let unitDescription = "\(item.unit, privacy: .private)"
-        let percentDescription = "\(percent, privacy: .public)%"
-
         Logger.habits.debug(
-            "Demo progress for \(title): \(progressValue) \(unitDescription) (\(percentDescription) done)"
+            "Demo progress for \(item.title): \(Int(updatedValue))/\(Int(item.goal)) \(item.unit) (\(percent)% done)"
         )
     }
 }

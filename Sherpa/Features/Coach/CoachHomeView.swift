@@ -169,7 +169,8 @@ struct CoachHomeView: View {
     }
 }
 
-private struct ConversationListView: View {
+@MainActor
+private struct ConversationListView: View, Sendable {
     private let bottomAnchorId = "conversation-bottom-anchor"
 
     let messages: [CoachMessage]
@@ -206,15 +207,15 @@ private struct ConversationListView: View {
             .onTapGesture {
                 onBackgroundTap()
             }
-            .onChange(of: messages) {
+            .onChange(of: messages, initial: false) { @MainActor @Sendable (_: [CoachMessage], _: [CoachMessage]) in
                 scrollToBottom(proxy)
             }
-            .onChange(of: isCoachTyping) { _, newValue in
+            .onChange(of: isCoachTyping, initial: false) { @MainActor @Sendable (_: Bool, newValue: Bool) in
                 if newValue {
                     scrollToBottom(proxy)
                 }
             }
-            .onChange(of: keyboardHeight) { _, newValue in
+            .onChange(of: keyboardHeight, initial: false) { @MainActor @Sendable (_: CGFloat, newValue: CGFloat) in
                 if newValue > 0 {
                     scrollToBottom(proxy)
                 }
@@ -226,7 +227,7 @@ private struct ConversationListView: View {
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
-        Task { @MainActor in
+        DispatchQueue.main.async {
             withAnimation(.easeInOut(duration: 0.3)) {
                 proxy.scrollTo(bottomAnchorId, anchor: .bottom)
             }

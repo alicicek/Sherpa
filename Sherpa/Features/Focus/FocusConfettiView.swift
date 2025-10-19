@@ -17,16 +17,16 @@ struct FocusConfettiView: View {
     private let activeDuration: Double = 2.2
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
-            Canvas { context, size in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { (context: TimelineViewDefaultContext) in
+            Canvas { canvasContext, size in
                 guard let emissionDate else { return }
 
-                let elapsed = timeline.date.timeIntervalSince(emissionDate)
+                let elapsed = context.date.timeIntervalSince(emissionDate)
                 let duration = reduceMotion ? 0.4 : activeDuration
 
                 guard elapsed <= duration else {
                     _Concurrency.Task { @MainActor in
-                        emissionDate = nil
+                        self.emissionDate = nil
                     }
                     return
                 }
@@ -53,7 +53,7 @@ struct FocusConfettiView: View {
                         opacityFactor = 1.0
                     }
 
-                    var particleContext = context
+                    var particleContext = canvasContext
                     particleContext.opacity = opacityFactor
 
                     let rect = CGRect(x: horizontalOffset - 3, y: verticalOffset - 6, width: 6, height: 12)
@@ -64,7 +64,7 @@ struct FocusConfettiView: View {
         }
         .allowsHitTesting(false)
         .opacity(emissionDate == nil ? 0 : 1)
-        .onChange(of: trigger) { _, newValue in
+        .onChange(of: trigger, initial: false) { @MainActor @Sendable (_: Int, newValue: Int) in
             guard newValue > 0 else { return }
             emissionDate = Date()
         }
