@@ -21,17 +21,17 @@ final class CoachViewModel: ObservableObject {
         [
             "Love that energy!",
             "Remember: tiny wins count just as much as the big swings.",
-            "Want help lining up one small action for today?"
+            "Want help lining up one small action for today?",
         ],
         [
             "Totally hear you.",
             "Let’s zoom into the next hour instead of the whole day.",
-            "What’s one thing you could wrap up before you take a break?"
+            "What’s one thing you could wrap up before you take a break?",
         ],
         [
             "You’re building momentum, even if it doesn’t feel like it yet.",
-            "How about we celebrate one win you’ve had this week?"
-        ]
+            "How about we celebrate one win you’ve had this week?",
+        ],
     ]
 
     init() {
@@ -70,11 +70,11 @@ final class CoachViewModel: ObservableObject {
                 let isLastBubble = index == response.count - 1
 
                 if isLastBubble {
-                    self.isCoachTyping = false
+                    isCoachTyping = false
                 }
 
-                self.messages.append(CoachMessage(text: bubble, role: .coach))
-                self.pendingResponseWorkItems.removeAll { $0 === workItem }
+                messages.append(CoachMessage(text: bubble, role: .coach))
+                pendingResponseWorkItems.removeAll { $0 === workItem }
             }
 
             if let workItem {
@@ -90,7 +90,7 @@ final class CoachViewModel: ObservableObject {
             let totalDelay = leadDelay + bubbleSpacing * Double(lastBubbleDelay + 1)
             let typingReset = DispatchWorkItem { [weak self] in
                 guard let self else { return }
-                self.isCoachTyping = false
+                isCoachTyping = false
             }
             pendingResponseWorkItems.append(typingReset)
             DispatchQueue.main.asyncAfter(deadline: .now() + totalDelay, execute: typingReset)
@@ -103,13 +103,12 @@ final class CoachViewModel: ObservableObject {
         isCoachTyping = false
     }
 
-
     private func seedConversation() {
         messages = [
             CoachMessage(text: "Hey, I’m Summit — your Sherpa coach.", role: .coach),
             CoachMessage(text: "Here for pep-talks, quick nudges, and the occasional reality check.", role: .coach),
             CoachMessage(text: "What’s on your mind today?", role: .coach),
-            CoachMessage(text: "Just exploring the app right now!", role: .user)
+            CoachMessage(text: "Just exploring the app right now!", role: .user),
         ]
     }
 }
@@ -170,6 +169,7 @@ struct CoachHomeView: View {
     }
 }
 
+@MainActor
 private struct ConversationListView: View {
     private let bottomAnchorId = "conversation-bottom-anchor"
 
@@ -207,15 +207,15 @@ private struct ConversationListView: View {
             .onTapGesture {
                 onBackgroundTap()
             }
-            .onChange(of: messages) { _ in
+            .onChange(of: messages, initial: false) { @MainActor @Sendable (_: [CoachMessage], _: [CoachMessage]) in
                 scrollToBottom(proxy)
             }
-            .onChange(of: isCoachTyping) { newValue in
+            .onChange(of: isCoachTyping, initial: false) { @MainActor @Sendable (_: Bool, newValue: Bool) in
                 if newValue {
                     scrollToBottom(proxy)
                 }
             }
-            .onChange(of: keyboardHeight) { newValue in
+            .onChange(of: keyboardHeight, initial: false) { @MainActor @Sendable (_: CGFloat, newValue: CGFloat) in
                 if newValue > 0 {
                     scrollToBottom(proxy)
                 }
@@ -295,9 +295,9 @@ private struct MessageRow: View {
 
     private var messageBackground: some ShapeStyle {
         if isUser {
-            return Color.sherpaPrimary
+            Color.sherpaPrimary
         } else {
-            return Color.white
+            Color.white
         }
     }
 
@@ -321,7 +321,7 @@ private struct TypingBubble: View {
 
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.xs) {
-            ForEach(0..<3) { index in
+            ForEach(0 ..< 3) { index in
                 Circle()
                     .fill(Color.sherpaTextSecondary.opacity(0.6))
                     .frame(width: 8, height: 8)
@@ -361,7 +361,7 @@ private struct CoachComposer: View {
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.sm) {
             TextField("Type a message", text: $text, axis: .vertical)
-                .lineLimit(1...3)
+                .lineLimit(1 ... 3)
                 .textFieldStyle(.plain)
                 .padding(.horizontal, DesignTokens.Spacing.md)
                 .padding(.vertical, DesignTokens.Spacing.sm)
@@ -377,16 +377,23 @@ private struct CoachComposer: View {
                     }
                 }
 
-            Button(action: onSend) {
-                Image(systemName: "paperplane.fill")
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.sherpaTextSecondary.opacity(0.25) : Color.sherpaPrimary)
-                    )
-            }
+            Button(
+                action: onSend,
+                label: {
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(
+                                    text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                        ? Color.sherpaTextSecondary.opacity(0.25)
+                                        : Color.sherpaPrimary
+                                )
+                        )
+                }
+            )
             .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .padding(.horizontal, DesignTokens.Spacing.lg)
@@ -423,27 +430,27 @@ private final class KeyboardObserver: ObservableObject {
             .sink { [weak self] notification in
                 guard let self else { return }
 
-                guard let userInfo = notification.userInfo,
-                      let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
-                      let windowScene = UIApplication.shared.connectedScenes
-                        .compactMap({ $0 as? UIWindowScene })
-                        .first else {
-                    self.currentHeight = 0
+                guard
+                    let userInfo = notification.userInfo,
+                    let endFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+                    let windowScene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first
+                else {
+                    currentHeight = 0
                     return
                 }
 
                 let screenHeight = windowScene.screen.bounds.height
                 let overlap = max(0, screenHeight - endFrame.origin.y)
-                self.currentHeight = overlap
+                currentHeight = overlap
             }
             .store(in: &cancellables)
     }
 }
 
 private func hideKeyboard() {
-#if canImport(UIKit)
-    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-#endif
+    #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    #endif
 }
 
 private extension Array {

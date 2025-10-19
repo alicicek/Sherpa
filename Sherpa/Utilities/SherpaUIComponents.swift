@@ -56,11 +56,11 @@ struct SherpaCard<Content: View>: View {
 
     private var fillStyle: AnyShapeStyle {
         switch backgroundStyle {
-        case .solid(let color):
+        case let .solid(color):
             return AnyShapeStyle(color)
-        case .gradient(let gradient):
+        case let .gradient(gradient):
             return AnyShapeStyle(gradient)
-        case .palette(let colors):
+        case let .palette(colors):
             let resolved = LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
             return AnyShapeStyle(resolved)
         }
@@ -74,7 +74,6 @@ enum SherpaChipStyle {
 }
 
 struct SherpaChip<Content: View>: View {
-
     private let style: SherpaChipStyle
     private let isSelected: Bool
     private let content: Content
@@ -130,11 +129,11 @@ struct SherpaChip<Content: View>: View {
     private var foregroundColor: Color {
         switch style {
         case .neutral:
-            return isSelected ? Color.white : Color.sherpaTextPrimary
-        case .accent(let color):
-            return isSelected ? Color.white : color
+            isSelected ? Color.white : Color.sherpaTextPrimary
+        case let .accent(color):
+            isSelected ? Color.white : color
         case .gradient:
-            return Color.white
+            Color.white
         }
     }
 
@@ -142,26 +141,39 @@ struct SherpaChip<Content: View>: View {
         switch style {
         case .neutral:
             if isSelected {
-                return AnyShapeStyle(LinearGradient(colors: [DesignTokens.Colors.primary, DesignTokens.Colors.accentBlue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                AnyShapeStyle(
+                    LinearGradient(
+                        colors: [DesignTokens.Colors.primary, DesignTokens.Colors.accentBlue],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
             } else {
-                return AnyShapeStyle(Color.white.opacity(0.9))
+                AnyShapeStyle(Color.white.opacity(0.9))
             }
-        case .accent(let color):
+        case let .accent(color):
             if isSelected {
-                return AnyShapeStyle(color)
+                AnyShapeStyle(color)
             } else {
-                return AnyShapeStyle(color.opacity(0.22))
+                AnyShapeStyle(color.opacity(0.22))
             }
-        case .gradient(let colors):
-            return AnyShapeStyle(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+        case let .gradient(colors):
+            AnyShapeStyle(
+                LinearGradient(
+                    colors: colors,
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
         }
     }
 
+    // swiftformat:disable redundantReturn
     private var borderColor: Color {
         switch style {
         case .neutral:
             return isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.3)
-        case .accent(let color):
+        case let .accent(color):
             return color.opacity(isSelected ? 0.6 : 0.35)
         case .gradient:
             return Color.white.opacity(isSelected ? 0.8 : 0.4)
@@ -172,17 +184,18 @@ struct SherpaChip<Content: View>: View {
         switch style {
         case .neutral:
             return isSelected ? DesignTokens.Colors.primary.opacity(0.28) : Color.black.opacity(0.08)
-        case .accent(let color):
+        case let .accent(color):
             return color.opacity(isSelected ? 0.4 : 0.12)
-        case .gradient(let colors):
+        case let .gradient(colors):
             return colors.last?.opacity(0.32) ?? Color.black.opacity(0.12)
         }
     }
+    // swiftformat:enable redundantReturn
 }
 
 struct SherpaBadge: View {
     enum Kind {
-        case xp
+        case xpReward
         case streak
         case neutral
     }
@@ -211,9 +224,12 @@ struct SherpaBadge: View {
 
     private var backgroundColor: Color {
         switch kind {
-        case .xp: return DesignTokens.Colors.accentGold
-        case .streak: return DesignTokens.Colors.primary
-        case .neutral: return DesignTokens.Colors.accentPurple
+        case .xpReward:
+            DesignTokens.Colors.accentGold
+        case .streak:
+            DesignTokens.Colors.primary
+        case .neutral:
+            DesignTokens.Colors.accentPurple
         }
     }
 }

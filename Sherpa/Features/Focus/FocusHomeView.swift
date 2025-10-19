@@ -31,39 +31,10 @@ private extension FocusHomeView {
     @ViewBuilder
     func buildContent(safeAreaInsets: EdgeInsets) -> some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: DesignTokens.Spacing.xl + DesignTokens.Spacing.lg) {
-                    VStack(spacing: DesignTokens.Spacing.lg) {
-                        phaseHeader
-                        progressDots
-                        timerDisplay
-                        primaryControlButton
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    secondaryControls
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, DesignTokens.Spacing.lg)
-                .padding(.top, safeAreaInsets.top + DesignTokens.Spacing.xl)
-                .padding(.bottom, safeAreaInsets.bottom + DesignTokens.Spacing.xl)
-            }
-            .scrollIndicators(.hidden)
-            .background(Color(.systemBackground).ignoresSafeArea())
-            .overlay {
-                FocusConfettiView(trigger: confettiTrigger)
-                    .allowsHitTesting(false)
-            }
-            .overlay(alignment: .top) {
-                if celebrateBadgeVisible {
-                    celebrationBadge
-                        .transition(.opacity)
-                        .padding(.top, DesignTokens.Spacing.xl)
-                }
-            }
-            .navigationTitle("Focus")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .navigationBar)
+            focusScrollContent(safeAreaInsets: safeAreaInsets)
+                .navigationTitle("Focus")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
             rewardedSessionCount = viewModel.totalFocusSessions
@@ -71,7 +42,7 @@ private extension FocusHomeView {
         .onReceive(timer) { _ in
             viewModel.tick()
         }
-        .onChange(of: viewModel.totalFocusSessions) { newValue in
+        .onChange(of: viewModel.totalFocusSessions, initial: false) { @MainActor @Sendable (_: Int, newValue: Int) in
             guard newValue > rewardedSessionCount else { return }
             let delta = newValue - rewardedSessionCount
             rewardedSessionCount = newValue
@@ -83,6 +54,41 @@ private extension FocusHomeView {
             }
         }
     }
+
+    @ViewBuilder
+    func focusScrollContent(safeAreaInsets: EdgeInsets) -> some View {
+        ScrollView {
+            VStack(spacing: DesignTokens.Spacing.xl + DesignTokens.Spacing.lg) {
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    phaseHeader
+                    progressDots
+                    timerDisplay
+                    primaryControlButton
+                }
+                .frame(maxWidth: .infinity)
+
+                secondaryControls
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, DesignTokens.Spacing.lg)
+            .padding(.top, safeAreaInsets.top + DesignTokens.Spacing.xl)
+            .padding(.bottom, safeAreaInsets.bottom + DesignTokens.Spacing.xl)
+        }
+        .scrollIndicators(.hidden)
+        .background(Color(.systemBackground).ignoresSafeArea())
+        .overlay {
+            FocusConfettiView(trigger: confettiTrigger)
+                .allowsHitTesting(false)
+        }
+        .overlay(alignment: .top) {
+            if celebrateBadgeVisible {
+                celebrationBadge
+                    .transition(.opacity)
+                    .padding(.top, DesignTokens.Spacing.xl)
+            }
+        }
+    }
+
     var phaseHeader: some View {
         Text(viewModel.isInBreak ? "Break" : "Flow")
             .font(.system(.title3, design: .rounded).weight(.medium))
@@ -93,7 +99,7 @@ private extension FocusHomeView {
 
     var progressDots: some View {
         HStack(spacing: DesignTokens.Spacing.md) {
-            ForEach(0..<4, id: \.self) { index in
+            ForEach(0 ..< 4, id: \.self) { index in
                 Circle()
                     .fill(fillColor(for: index))
                     .frame(width: 12, height: 12)
@@ -227,7 +233,10 @@ private extension FocusHomeView {
     }
 
     func fillColor(for index: Int) -> Color {
-        index < viewModel.completedSessionsInCycle ? DesignTokens.Colors.primary : Color.sherpaTextSecondary.opacity(0.15)
+        if index < viewModel.completedSessionsInCycle {
+            return DesignTokens.Colors.primary
+        }
+        return Color.sherpaTextSecondary.opacity(0.15)
     }
 
     var primaryControlIconName: String {

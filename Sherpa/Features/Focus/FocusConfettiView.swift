@@ -17,11 +17,11 @@ struct FocusConfettiView: View {
     private let activeDuration: Double = 2.2
 
     var body: some View {
-        TimelineView<AnimationTimelineSchedule, AnyView>(.animation(minimumInterval: 1.0 / 30.0), content: { timeline in
-            AnyView(Canvas { context, size in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { (context: TimelineViewDefaultContext) in
+            Canvas { canvasContext, size in
                 guard let emissionDate else { return }
 
-                let elapsed = timeline.date.timeIntervalSince(emissionDate)
+                let elapsed = context.date.timeIntervalSince(emissionDate)
                 let duration = reduceMotion ? 0.4 : activeDuration
 
                 guard elapsed <= duration else {
@@ -35,15 +35,15 @@ struct FocusConfettiView: View {
                 let fadeOutStart = duration * 0.7
                 let baseColor = Color.yellow.opacity(reduceMotion ? 0.7 : 0.92)
 
-                for id in 0..<particleCount {
+                for id in 0 ..< particleCount {
                     let base = Double(id) / Double(particleCount)
                     let stagger = base * 0.4
                     let timeFactor = elapsed - stagger
                     if timeFactor < 0 { continue }
 
                     let normalized = min(1.0, max(0.0, timeFactor) / max(0.001, duration - stagger))
-                    let x = size.width * base + cos((elapsed + base) * 5.3) * 36
-                    let y = normalized * travelHeight - 40
+                    let horizontalOffset = size.width * base + cos((elapsed + base) * 5.3) * 36
+                    let verticalOffset = normalized * travelHeight - 40
 
                     let opacityFactor: Double
                     if elapsed > fadeOutStart {
@@ -53,18 +53,18 @@ struct FocusConfettiView: View {
                         opacityFactor = 1.0
                     }
 
-                    var particleContext = context
+                    var particleContext = canvasContext
                     particleContext.opacity = opacityFactor
 
-                    let rect = CGRect(x: x - 3, y: y - 6, width: 6, height: 12)
+                    let rect = CGRect(x: horizontalOffset - 3, y: verticalOffset - 6, width: 6, height: 12)
                     let path = Path(roundedRect: rect, cornerRadius: 2)
                     particleContext.fill(path, with: .color(baseColor))
                 }
-            })
-        })
+            }
+        }
         .allowsHitTesting(false)
         .opacity(emissionDate == nil ? 0 : 1)
-        .onChange(of: trigger) { newValue in
+        .onChange(of: trigger, initial: false) { @MainActor @Sendable (_: Int, newValue: Int) in
             guard newValue > 0 else { return }
             emissionDate = Date()
         }

@@ -5,6 +5,7 @@
 //  Created by Codex on 15/10/2025.
 //
 
+import OSLog
 import SwiftData
 import SwiftUI
 import UIKit
@@ -27,9 +28,10 @@ private struct HabitTileProfile {
     let background: Color
 }
 
+@MainActor
 struct HabitsHomeView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedDate: Date = Date().startOfDay
+    @State private var selectedDate: Date = .init().startOfDay
     @State private var showingAddSheet = false
     @State private var skipNoteTarget: HabitInstance?
     @State private var calendarWindowStart: Date
@@ -78,7 +80,8 @@ struct HabitsHomeView: View {
                             EmptyStateView()
                         } else {
                             VStack(spacing: DesignTokens.Spacing.md) {
-                                ForEach(todaysItems.enumerated().map({ $0 }), id: \.element.id) { index, instance in
+                                ForEach(todaysItems.indices, id: \.self) { index in
+                                    let instance = todaysItems[index]
                                     let profile = habitProfile(for: instance, colorIndex: index)
                                     let model = tileModel(for: instance, profile: profile)
                                     HabitTile(
@@ -114,15 +117,9 @@ struct HabitsHomeView: View {
                     .padding(.vertical, DesignTokens.Spacing.xl)
                 }
             }
-            .task {
+            .task(id: selectedDate) {
                 adjustCalendarWindowIfNeeded(for: selectedDate)
-                await ensureScheduleForVisibleRange()
-            }
-            .onChange(of: selectedDate) { newValue in
-                adjustCalendarWindowIfNeeded(for: newValue)
-                _Concurrency.Task {
-                    await ensureScheduleForVisibleRange(centeredOn: newValue)
-                }
+                await ensureScheduleForVisibleRange(centeredOn: selectedDate)
             }
             .sheet(isPresented: $showingAddSheet) {
                 AddRoutineSheet(isPresented: $showingAddSheet, onComplete: handleAddItem)
@@ -141,6 +138,7 @@ struct HabitsHomeView: View {
 
 // MARK: - Derived Values
 
+@MainActor
 private extension HabitsHomeView {
     var todaysItems: [HabitInstance] {
         let grouped = Dictionary(grouping: instances) { $0.date.startOfDay }
@@ -160,7 +158,7 @@ private extension HabitsHomeView {
     }
 
     var completedCount: Int {
-        todaysItems.filter { $0.status == .completed }.count
+        todaysItems.count(where: { $0.status == .completed })
     }
 
     var eligibleHabitCount: Int {
@@ -175,11 +173,11 @@ private extension HabitsHomeView {
     var leagueTitle: String {
         switch completionProgress {
         case 0.75...:
-            return "Summit League"
+            "Summit League"
         case 0.4...:
-            return "Hilltop League"
+            "Hilltop League"
         default:
-            return "Hilltop League"
+            "Hilltop League"
         }
     }
 
@@ -192,7 +190,7 @@ private extension HabitsHomeView {
 
     var calendarDates: [Date] {
         let start = calendarWindowStart
-        return (0...(calendarSpan * 2)).map { offset in
+        return (0 ... (calendarSpan * 2)).map { offset in
             start.adding(days: offset)
         }
     }
@@ -208,7 +206,7 @@ private extension HabitsHomeView {
 
         for (date, items) in grouped {
             let eligibleItems = items.filter { $0.status != .skippedWithNote }
-            let completedCount = eligibleItems.filter { $0.status == .completed }.count
+            let completedCount = eligibleItems.count(where: { $0.status == .completed })
             let eligibleCount = eligibleItems.count
 
             guard eligibleCount > 0 else {
@@ -232,6 +230,7 @@ private extension HabitsHomeView {
 
 // MARK: - Behaviours
 
+@MainActor
 private extension HabitsHomeView {
     func ensureScheduleForVisibleRange(centeredOn date: Date? = nil) async {
         let center = date?.startOfDay ?? selectedDate
@@ -240,7 +239,7 @@ private extension HabitsHomeView {
         do {
             try ScheduleService(context: modelContext).ensureSchedule(from: start, to: end)
         } catch {
-            print("Failed to ensure schedule: \(error)")
+            Logger.habits.error("Failed to ensure schedule: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -251,12 +250,12 @@ private extension HabitsHomeView {
         do {
             try modelContext.save()
         } catch {
-            print("Failed to update instance: \(error)")
+            Logger.habits.error("Failed to update instance: \(error.localizedDescription, privacy: .public)")
         }
     }
 
     func handleAddItem() {
-        _Concurrency.Task {
+        _Concurrency.Task { @MainActor in
             await ensureScheduleForVisibleRange()
         }
     }
@@ -371,7 +370,11 @@ private extension HabitsHomeView {
     func saveProgress(for instance: HabitInstance, progress: Double, profile: HabitTileProfile) {
         // Placeholder persistence hook. Replace with Supabase integration.
         let percent = profile.goal > 0 ? Int((progress / profile.goal) * 100) : 0
-        print("Saved progress for \(instance.displayName): \(Int(progress))/\(Int(profile.goal)) \(profile.unit) (\(percent)% done)")
+        let displayName = instance.displayName
+        let progressValue = "\(Int(progress))/\(Int(profile.goal))"
+        let unitDescription = profile.unit
+        let percentDescription = "\(percent)%"
+        Logger.habits.debug("Saved progress for \(displayName): \(progressValue) \(unitDescription) (\(percentDescription) done)")
     }
 
     func resetProgress(for instance: HabitInstance, profile: HabitTileProfile) {
@@ -399,24 +402,23 @@ private extension HabitsHomeView {
             backgroundColor: profile.background
         )
     }
-
 }
 
 private enum AdaptiveStepCalculator {
     static func stepSize(for goal: Double) -> Double {
         switch goal {
         case ..<20:
-            return 1
+            1
         case ..<200:
-            return 5
+            5
         case ..<1000:
-            return 10
+            10
         case ..<5000:
-            return 50
+            50
         case ..<10000:
-            return 100
+            100
         default:
-            return 250
+            250
         }
     }
 }
@@ -442,7 +444,7 @@ private struct HabitsHeroCard: View {
             LinearGradient(
                 colors: [
                     Color.white.opacity(0.85),
-                    Color.white.opacity(0.0)
+                    Color.white.opacity(0.0),
                 ],
                 startPoint: .top,
                 endPoint: .center
@@ -483,7 +485,6 @@ private struct CalendarStripView: View {
     private let calendar = Calendar.current
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hasPerformedInitialScroll = false
-    @State private var lastSelectedDate: Date = Date().startOfDay
     private let defaultAnchor = UnitPoint(x: 0.78, y: 0.5)
     private let pastAnchor = UnitPoint(x: 0.82, y: 0.5)
     private let futureAnchor = UnitPoint(x: 0.18, y: 0.5)
@@ -514,38 +515,34 @@ private struct CalendarStripView: View {
             .onAppear {
                 guard !hasPerformedInitialScroll else { return }
                 hasPerformedInitialScroll = true
-                lastSelectedDate = selectedDate
-                scrollToSelected(proxy: proxy, anchor: defaultAnchor, animated: false)
+                scrollToSelected(date: selectedDate, proxy: proxy, anchor: defaultAnchor, animated: false)
             }
-            .onChange(of: selectedDate) { newDate in
-                let anchor = anchor(for: newDate, previous: lastSelectedDate)
-                lastSelectedDate = newDate
-                scrollToSelected(proxy: proxy, anchor: anchor)
+            .onChange(of: selectedDate, initial: false) { (previousDate: Date, newDate: Date) in
+                let anchor = anchor(for: newDate, previous: previousDate)
+                scrollToSelected(date: newDate, proxy: proxy, anchor: anchor)
             }
         }
     }
 
     private func scrollToSelected(
+        date: Date,
         proxy: ScrollViewProxy,
         anchor: UnitPoint,
         animated: Bool = true
     ) {
-        let performScroll = {
-            proxy.scrollTo(selectedDate.startOfDay, anchor: anchor)
-        }
+        let targetID = date.startOfDay
+        let shouldAnimate = animated && !reduceMotion
+        let animation = Animation.spring(response: 0.45, dampingFraction: 0.85, blendDuration: 0.15)
 
-        let scrollAction = {
-            if reduceMotion || !animated {
-                performScroll()
-            } else {
-                let animation = Animation.spring(response: 0.45, dampingFraction: 0.85, blendDuration: 0.15)
+        DispatchQueue.main.async {
+            if shouldAnimate {
                 withAnimation(animation) {
-                    performScroll()
+                    proxy.scrollTo(targetID, anchor: anchor)
                 }
+            } else {
+                proxy.scrollTo(targetID, anchor: anchor)
             }
         }
-
-        DispatchQueue.main.async(execute: scrollAction)
     }
 
     private func anchor(for newDate: Date, previous oldDate: Date) -> UnitPoint {
@@ -770,7 +767,7 @@ struct HabitTile: View {
             displayProgress = progress
             handleCompletionState(for: progress)
         }
-        .onChange(of: progress) { newValue in
+        .onChange(of: progress, initial: false) { @MainActor @Sendable (_: Double, newValue: Double) in
             if isDragging == false {
                 withAnimation(.easeOut(duration: 0.18)) {
                     displayProgress = newValue
@@ -890,11 +887,11 @@ struct HabitTile: View {
             let iterations = min(abs(delta), 6)
 
             if delta > 0 {
-                for _ in 0..<iterations {
+                for _ in 0 ..< iterations {
                     mediumFeedback.impactOccurred()
                 }
             } else {
-                for _ in 0..<iterations {
+                for _ in 0 ..< iterations {
                     lightFeedback.impactOccurred()
                 }
             }
@@ -942,7 +939,7 @@ struct HabitTileDemoView: View {
         HabitProgressItem(title: "Drink Water", subtitle: "Hydration", icon: "💧", unit: "ml", goal: 3000, step: 250, accentColor: Color(hex: "#28A6FF"), backgroundColor: Color(hex: "#DFF1FF"), current: 1350),
         HabitProgressItem(title: "Eat 100g Protein", subtitle: "Nutrition", icon: "🍗", unit: "g", goal: 400, step: 25, accentColor: Color(hex: "#68E08C"), backgroundColor: Color(hex: "#E5FBEA"), current: 370),
         HabitProgressItem(title: "Morning Walk", subtitle: "Movement", icon: "🚶", unit: "steps", goal: 8000, step: 500, accentColor: Color(hex: "#FF914D"), backgroundColor: Color(hex: "#FFE9D8"), current: 4500),
-        HabitProgressItem(title: "Meditate", subtitle: "Mindfulness", icon: "🧘", unit: "min", goal: 20, step: 5, accentColor: Color(hex: "#BA8CFF"), backgroundColor: Color(hex: "#F2E7FF"), current: 10)
+        HabitProgressItem(title: "Meditate", subtitle: "Mindfulness", icon: "🧘", unit: "min", goal: 20, step: 5, accentColor: Color(hex: "#BA8CFF"), backgroundColor: Color(hex: "#F2E7FF"), current: 10),
     ]
 
     var body: some View {
@@ -972,7 +969,9 @@ struct HabitTileDemoView: View {
 
     private func saveProgress(for item: HabitProgressItem, updatedValue: Double) {
         let percent = item.goal > 0 ? Int((updatedValue / item.goal) * 100) : 0
-        print("Demo progress for \(item.title): \(Int(updatedValue))/\(Int(item.goal)) \(item.unit) (\(percent)% done)")
+        Logger.habits.debug(
+            "Demo progress for \(item.title): \(Int(updatedValue))/\(Int(item.goal)) \(item.unit) (\(percent)% done)"
+        )
     }
 }
 
@@ -999,25 +998,28 @@ private struct AddHabitsButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            ZStack {
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
-                    .fill(Color(hex: "#2F7C1B"))
-                    .offset(y: 4)
-                    .opacity(0.9)
+        Button(
+            action: action,
+            label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                        .fill(Color(hex: "#2F7C1B"))
+                        .offset(y: 4)
+                        .opacity(0.9)
 
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
-                    .fill(Color(hex: "#58B62F"))
+                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                        .fill(Color(hex: "#58B62F"))
 
-                Text("ADD HABITS")
-                    .font(.system(.headline, design: .rounded).weight(.bold))
-                    .foregroundStyle(Color.white)
-                    .kerning(1.1)
+                    Text("ADD HABITS")
+                        .font(.system(.headline, design: .rounded).weight(.bold))
+                        .foregroundStyle(Color.white)
+                        .kerning(1.1)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .shadow(color: Color.black.opacity(0.08), radius: 6, y: 3)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 54)
-            .shadow(color: Color.black.opacity(0.08), radius: 6, y: 3)
-        }
+        )
         .buttonStyle(PressedScaleButtonStyle())
         .accessibilityLabel("Add a new habit")
     }
@@ -1044,15 +1046,15 @@ private struct AddRoutineSheet: View {
 
         var label: String {
             switch self {
-            case .habit: return "Habit"
-            case .task: return "Task"
+            case .habit: "Habit"
+            case .task: "Task"
             }
         }
 
         var icon: String {
             switch self {
-            case .habit: return "flame.fill"
-            case .task: return "checkmark.circle.fill"
+            case .habit: "flame.fill"
+            case .task: "checkmark.circle.fill"
             }
         }
     }
@@ -1077,21 +1079,21 @@ private struct AddRoutineSheet: View {
     @State private var frequency: RecurrenceFrequency = .daily
     @State private var interval: Int = 1
     @State private var selectedWeekdays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
-    @State private var dueDate: Date = Date()
+    @State private var dueDate = Date()
 
     private var suggestions: [Suggestion] {
         switch itemKind {
         case .habit:
-            return [
+            [
                 Suggestion(title: "Morning stretch", detail: "5 minute warm-up", frequency: .daily, weekdays: nil),
                 Suggestion(title: "Deep tidy", detail: "30m reset", frequency: .weekly, weekdays: [.saturday]),
-                Suggestion(title: "Drink water", detail: "Hydrate before coffee", frequency: .daily, weekdays: nil)
+                Suggestion(title: "Drink water", detail: "Hydrate before coffee", frequency: .daily, weekdays: nil),
             ]
         case .task:
-            return [
+            [
                 Suggestion(title: "Submit assignment", detail: "Wrap before midnight", frequency: .daily, weekdays: nil),
                 Suggestion(title: "Meal prep", detail: "Sunday planning", frequency: .weekly, weekdays: [.sunday]),
-                Suggestion(title: "Budget review", detail: "Payday check-in", frequency: .monthly, weekdays: nil)
+                Suggestion(title: "Budget review", detail: "Payday check-in", frequency: .monthly, weekdays: nil),
             ]
         }
     }
@@ -1149,7 +1151,7 @@ private struct AddRoutineSheet: View {
                             )
 
                         TextField("Notes (optional)", text: $detail, axis: .vertical)
-                            .lineLimit(2...4)
+                            .lineLimit(2 ... 4)
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
@@ -1168,7 +1170,7 @@ private struct AddRoutineSheet: View {
                             }
                             .pickerStyle(.segmented)
 
-                            Stepper(value: $interval, in: 1...30) {
+                            Stepper(value: $interval, in: 1 ... 30) {
                                 Text("Every \(interval) \(frequency == .weekly ? "week(s)" : frequency == .monthly ? "month(s)" : "day(s)")")
                             }
 
@@ -1176,7 +1178,7 @@ private struct AddRoutineSheet: View {
                                 WeekdaySelectionView(selected: $selectedWeekdays)
                             }
 
-                            if itemKind == .task && frequency == .daily {
+                            if itemKind == .task, frequency == .daily {
                                 DatePicker("Due Date", selection: $dueDate, displayedComponents: [.date])
                             }
                         }
@@ -1255,7 +1257,7 @@ private struct AddRoutineSheet: View {
             onComplete()
             isPresented = false
         } catch {
-            print("Failed to save: \(error)")
+            Logger.habits.error("Failed to save new item: \(error.localizedDescription, privacy: .public)")
         }
     }
 }
@@ -1301,7 +1303,7 @@ private struct SkipNoteSheet: View {
             Form {
                 Section("Reason for skipping") {
                     TextField("Type your note…", text: $note, axis: .vertical)
-                        .lineLimit(3...5)
+                        .lineLimit(3 ... 5)
                 }
             }
             .navigationTitle("Skip with note")

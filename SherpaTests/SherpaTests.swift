@@ -6,25 +6,27 @@
 //
 
 import Foundation
+@testable import Sherpa
 import SwiftData
 import Testing
-@testable import Sherpa
 
+@MainActor
 struct SherpaTests {
     private func makeInMemoryContext() throws -> ModelContext {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: Habit.self,
-                Task.self,
-                HabitInstance.self,
-                RecurrenceRule.self,
-                configurations: configuration
+            Task.self,
+            HabitInstance.self,
+            RecurrenceRule.self,
+            configurations: configuration
         )
         return ModelContext(container)
     }
 
     @Test
-    func streakRequiresFortyPercentCompletion() throws {
+    @MainActor
+    func streakRequiresFortyPercentCompletion() async throws {
         let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: .now)
         let habit = Habit(title: "Read", recurrenceRule: rule)
         let today = Date().startOfDay
@@ -38,7 +40,8 @@ struct SherpaTests {
     }
 
     @Test
-    func skipWithNoteExcludesFromStreakCalculation() throws {
+    @MainActor
+    func skipWithNoteExcludesFromStreakCalculation() async throws {
         let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: .now)
         let habit = Habit(title: "Run", recurrenceRule: rule)
         let today = Date().startOfDay
@@ -52,7 +55,8 @@ struct SherpaTests {
     }
 
     @Test
-    func scheduleServiceGeneratesInstancesWithoutDuplicates() throws {
+    @MainActor
+    func scheduleServiceGeneratesInstancesWithoutDuplicates() async throws {
         let context = try makeInMemoryContext()
         let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: Date().startOfDay)
         context.insert(rule)

@@ -9,6 +9,40 @@ import SwiftUI
 
 /// Shared design system constants sourced from the Sherpa PRD.
 enum DesignTokens {
+    struct NeutralPalette {
+        let g1: Color
+        let g2: Color
+        let g3: Color
+        let g4: Color
+        let g5: Color
+        let g6: Color
+        let g7: Color
+        let g8: Color
+        let g9: Color
+
+        init(
+            g1: Color,
+            g2: Color,
+            g3: Color,
+            g4: Color,
+            g5: Color,
+            g6: Color,
+            g7: Color,
+            g8: Color,
+            g9: Color
+        ) {
+            self.g1 = g1
+            self.g2 = g2
+            self.g3 = g3
+            self.g4 = g4
+            self.g5 = g5
+            self.g6 = g6
+            self.g7 = g7
+            self.g8 = g8
+            self.g9 = g9
+        }
+    }
+
     enum Colors {
         static let primary = Color(hex: "#58B62F")
         static let accentBlue = Color(hex: "#46A8E0")
@@ -21,7 +55,7 @@ enum DesignTokens {
         static let success = Color(hex: "#2FAE60")
         static let warning = Color(hex: "#E85C4A")
 
-        static let neutral: (g1: Color, g2: Color, g3: Color, g4: Color, g5: Color, g6: Color, g7: Color, g8: Color, g9: Color) = (
+        static let neutral = NeutralPalette(
             g1: Color(hex: "#F6F7F8"),
             g2: Color(hex: "#EDEFF1"),
             g3: Color(hex: "#DFE3E6"),
@@ -39,7 +73,7 @@ enum DesignTokens {
         [Colors.accentGold, Colors.accentOrange],
         [Colors.accentPink, Colors.accentPurple],
         [Colors.accentMint, Colors.accentBlue],
-        [Colors.accentPurple, Colors.accentGold]
+        [Colors.accentPurple, Colors.accentGold],
     ]
 
     enum CornerRadius {
@@ -63,7 +97,7 @@ enum DesignTokens {
             colors: [
                 Color(hex: "#F4FFE0"),
                 Color(hex: "#DDF8FF"),
-                Color.white
+                Color.white,
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -73,7 +107,7 @@ enum DesignTokens {
             colors: [
                 Colors.primary.opacity(0.35),
                 Colors.accentBlue.opacity(0.35),
-                Colors.accentPink.opacity(0.3)
+                Colors.accentPink.opacity(0.3),
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -82,7 +116,7 @@ enum DesignTokens {
         static let night = LinearGradient(
             colors: [
                 Color(hex: "#0D1126"),
-                Color(hex: "#1A2552")
+                Color(hex: "#1A2552"),
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -144,12 +178,11 @@ extension Color {
 
 extension View {
     /// Applies a playful card styling used throughout the Sherpa UI.
-    func sherpaCardStyle<S: ShapeStyle>(
-        background: S = Color.white,
-        padding: CGFloat = DesignTokens.Spacing.lg
+    func sherpaCardStyle(
+        background: some ShapeStyle = Color.white,
+        contentPadding: CGFloat = DesignTokens.Spacing.lg
     ) -> some View {
-        self
-            .padding(padding)
+        padding(contentPadding)
             .background(
                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous)
                     .fill(background)
@@ -158,12 +191,11 @@ extension View {
     }
 
     /// Applies a subtle raised capsule style used for pills and chips.
-    func sherpaPillStyle<S: ShapeStyle>(
-        background: S = Color.white,
+    func sherpaPillStyle(
+        background: some ShapeStyle = Color.white,
         stroke: Color = Color.white.opacity(0.3)
     ) -> some View {
-        self
-            .padding(.horizontal, DesignTokens.Spacing.md)
+        padding(.horizontal, DesignTokens.Spacing.md)
             .padding(.vertical, DesignTokens.Spacing.sm)
             .background(
                 Capsule(style: .continuous)
