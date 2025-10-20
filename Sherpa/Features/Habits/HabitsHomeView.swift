@@ -694,6 +694,8 @@ struct HabitTile: View {
     @State private var hasCelebratedCompletion = false
     @State private var dragStartProgress: Double = 0
     @State private var displayProgress: Double = 0
+    @State private var lastPreviewQuantized: Double = 0
+    @State private var lastCommittedQuantized: Double = 0
 
     private let lightFeedback = UIImpactFeedbackGenerator(style: .light)
     private let mediumFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -724,6 +726,7 @@ struct HabitTile: View {
             let width = proxy.size.width
             let cornerRadius = DesignTokens.CornerRadius.small
             let fillWidth = max(width * displayRatio, 0)
+            let fillCornerRadius = min(cornerRadius, fillWidth / 2)
 
             let isComplete = progressRatio >= 1 - 0.0001
             let fillOpacity = (isDragging || isComplete) ? 0.48 : 0.32
@@ -734,7 +737,8 @@ struct HabitTile: View {
                     .fill(model.backgroundColor)
 
                 if fillWidth > 0 {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    // Match the fill radius to the available width so we don't draw outside the tile when dragging starts.
+                    RoundedRectangle(cornerRadius: fillCornerRadius, style: .continuous)
                         .fill(model.accentColor.opacity(fillOpacity))
                         .frame(width: fillWidth)
                         .animation(.easeOut(duration: 0.18), value: displayRatio)
@@ -782,12 +786,19 @@ struct HabitTile: View {
         .onAppear {
             displayProgress = progress
             handleCompletionState(for: progress)
+
+            let quantized = quantize(progress)
+            lastPreviewQuantized = quantized
+            lastCommittedQuantized = quantized
         }
         .onChange(of: progress) { _, newValue in
             if isDragging == false {
                 withAnimation(.easeOut(duration: 0.18)) {
                     displayProgress = newValue
                 }
+                let quantized = quantize(newValue)
+                lastPreviewQuantized = quantized
+                lastCommittedQuantized = quantized
             }
             handleCompletionState(for: newValue)
         }
@@ -806,14 +817,14 @@ struct HabitTile: View {
                     onDragStateChange(true)
                     dragStartProgress = progress
                     hasCelebratedCompletion = progress >= model.goal - 0.0001
+                    lastPreviewQuantized = quantize(progress)
                 }
 
                 guard isDragging else { return }
 
                 let deltaRatio = Double(value.translation.width / max(totalWidth, 1))
                 let target = dragStartProgress + (deltaRatio * model.goal)
-                displayProgress = max(0, min(model.goal, target))
-                updateProgress(to: target)
+                previewProgress(with: target)
             }
             .onEnded { value in
                 guard isDragging else { return }
@@ -828,61 +839,78 @@ struct HabitTile: View {
 
                 if shouldSnapToGoal {
                     displayProgress = model.goal
-                    updateProgress(to: model.goal)
+                    commitProgress(to: model.goal)
                     rigidFeedback.impactOccurred()
                 } else if shouldSnapToZero {
                     displayProgress = 0
-                    updateProgress(to: 0)
+                    commitProgress(to: 0)
                     rigidFeedback.impactOccurred()
                 } else if model.goal <= model.step {
                     if target >= model.goal * 0.5 {
                         displayProgress = model.goal
-                        updateProgress(to: model.goal)
+                        commitProgress(to: model.goal)
                         rigidFeedback.impactOccurred()
                     } else {
                         displayProgress = 0
-                        updateProgress(to: 0)
+                        commitProgress(to: 0)
                         if dragStartProgress > 0 {
                             rigidFeedback.impactOccurred()
                         }
                     }
                 } else {
                     displayProgress = max(0, min(model.goal, target))
-                    updateProgress(to: target)
-                    if abs(target - dragStartProgress) > 0.0001 {
-                        rigidFeedback.impactOccurred()
-                    }
+                    commitProgress(to: target)
                 }
 
                 isDragging = false
                 onDragStateChange(false)
-
-                withAnimation(.easeOut(duration: 0.2)) {
-                    displayProgress = progress
-                }
             }
     }
 
-    private func updateProgress(to target: Double) {
+    private func previewProgress(with target: Double) {
+        let clamped = max(0, min(model.goal, target))
+        displayProgress = clamped
+        progress = clamped
+
+        let quantized = quantize(clamped)
+        if abs(quantized - lastPreviewQuantized) > 0.0001 {
+            handleStepHaptics(previous: lastPreviewQuantized, newValue: quantized)
+            lastPreviewQuantized = quantized
+        }
+        handleCompletionState(for: clamped)
+    }
+
+    private func commitProgress(to target: Double) {
         let clampedRaw = max(0, min(model.goal, target))
-        displayProgress = clampedRaw
-
         let quantized = quantize(clampedRaw)
-        let previous = progress
+        let previousQuantized = lastCommittedQuantized
 
-        guard abs(quantized - previous) > 0.0001 else { return }
+        if abs(quantized - previousQuantized) <= 0.0001 {
+            progress = quantized
+            lastPreviewQuantized = quantized
+            lastCommittedQuantized = quantized
+            handleCompletionState(for: quantized)
+            withAnimation(.easeOut(duration: 0.2)) {
+                displayProgress = quantized
+            }
+            return
+        }
 
         withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.85)) {
             progress = quantized
         }
         onProgressChange(quantized)
-        handleStepHaptics(previous: previous, newValue: quantized)
-        handleCompletionState(for: quantized)
 
-        if !isDragging {
-            withAnimation(.easeOut(duration: 0.2)) {
-                displayProgress = quantized
-            }
+        if abs(quantized - lastPreviewQuantized) > 0.0001 {
+            handleStepHaptics(previous: previousQuantized, newValue: quantized)
+            lastPreviewQuantized = quantized
+        }
+
+        handleCompletionState(for: quantized)
+        lastCommittedQuantized = quantized
+
+        withAnimation(.easeOut(duration: 0.2)) {
+            displayProgress = quantized
         }
     }
 
