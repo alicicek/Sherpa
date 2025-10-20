@@ -64,7 +64,7 @@ struct FocusConfettiView: View {
         })
         .allowsHitTesting(false)
         .opacity(emissionDate == nil ? 0 : 1)
-        .onChange(of: trigger) { newValue in
+        .onChange(of: trigger) { _, newValue in
             guard newValue > 0 else { return }
             emissionDate = Date()
         }

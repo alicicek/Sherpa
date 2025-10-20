@@ -59,8 +59,22 @@ struct SherpaApp: App {
             return (container, nil)
         } catch {
             Logger.startup.critical(
-                "Failed to initialise model container: \(error.localizedDescription, privacy: .public)"
+                "Failed to initialise persistent model container: \(error.localizedDescription, privacy: .public)"
             )
+
+            let fallbackConfig = ModelConfiguration(isStoredInMemoryOnly: true)
+            if let fallback = try? ModelContainer(
+                for: Habit.self,
+                    Task.self,
+                    HabitInstance.self,
+                    RecurrenceRule.self,
+                configurations: fallbackConfig
+            ) {
+                Logger.startup.notice("Using in-memory fallback model container after start-up failure")
+                return (fallback, StartupIssue(message: startupFailureMessage(for: error)))
+            }
+
+            Logger.startup.fault("Unable to create fallback in-memory model container")
             return (nil, StartupIssue(message: startupFailureMessage(for: error)))
         }
     }

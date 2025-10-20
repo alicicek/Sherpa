@@ -16,6 +16,7 @@ struct FocusHomeView: View {
     @State private var confettiTrigger: Int = 0
     @State private var celebrateBadgeVisible = false
     @State private var rewardedSessionCount = 0
+    @State private var celebrationDismissTask: _Concurrency.Task<Void, Never>? = nil
 
     private let focusXPReward = 25
 
@@ -27,6 +28,7 @@ struct FocusHomeView: View {
     }
 }
 
+@MainActor
 private extension FocusHomeView {
     @ViewBuilder
     func buildContent(safeAreaInsets: EdgeInsets) -> some View {
@@ -71,7 +73,7 @@ private extension FocusHomeView {
         .onReceive(timer) { _ in
             viewModel.tick()
         }
-        .onChange(of: viewModel.totalFocusSessions) { newValue in
+        .onChange(of: viewModel.totalFocusSessions) { _, newValue in
             guard newValue > rewardedSessionCount else { return }
             let delta = newValue - rewardedSessionCount
             rewardedSessionCount = newValue
@@ -81,6 +83,10 @@ private extension FocusHomeView {
             } else {
                 confettiTrigger += 1
             }
+        }
+        .onDisappear {
+            celebrationDismissTask?.cancel()
+            celebrationDismissTask = nil
         }
     }
     var phaseHeader: some View {
@@ -204,8 +210,17 @@ private extension FocusHomeView {
 
     func showCelebrationBadge() {
         celebrateBadgeVisible = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+        celebrationDismissTask?.cancel()
+        celebrationDismissTask = _Concurrency.Task { @MainActor in
+            do {
+                try await _Concurrency.Task.sleep(nanoseconds: 1_400_000_000)
+            } catch {
+                return
+            }
+
+            guard !_Concurrency.Task.isCancelled else { return }
             celebrateBadgeVisible = false
+            celebrationDismissTask = nil
         }
     }
 

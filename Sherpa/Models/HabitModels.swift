@@ -94,14 +94,19 @@ final class RecurrenceRule {
         case .daily:
             return daysFromStart % interval == 0
         case .weekly:
-            guard weekdays.isEmpty == false else {
-                return daysFromStart % (interval * 7) == 0
-            }
             let calendar = Calendar.current
-            let startWeek = calendar.component(.weekOfYear, from: startDate)
-            let currentWeek = calendar.component(.weekOfYear, from: normalizedDate)
-            let weekDelta = (currentWeek - startWeek + 5200) % 52 // Keep positive
-            guard weekDelta % interval == 0 else { return false }
+            let weeksFromStart = calendar.dateComponents(
+                [.weekOfYear],
+                from: startDate.startOfDay,
+                to: normalizedDate
+            ).weekOfYear ?? 0
+
+            guard weeksFromStart % interval == 0 else { return false }
+
+            if weekdays.isEmpty {
+                return true
+            }
+
             return weekdays.contains(normalizedDate.weekdayIndex)
         case .monthly:
             let calendar = Calendar.current

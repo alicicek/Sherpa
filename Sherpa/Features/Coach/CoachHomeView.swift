@@ -16,7 +16,7 @@ final class CoachViewModel: ObservableObject {
     @Published var isCoachTyping: Bool = false
 
     private var responseIndex: Int = 0
-    private var pendingResponseWorkItems: [DispatchWorkItem] = []
+    private var pendingResponseTasks: [UUID: _Concurrency.Task<Void, Never>] = [:]
     private let cannedResponses: [[String]] = [
         [
             "Love that energy!",
@@ -63,43 +63,17 @@ final class CoachViewModel: ObservableObject {
         let bubbleSpacing: TimeInterval = 1.0
 
         for (index, bubble) in response.enumerated() {
-            var workItem: DispatchWorkItem?
-            workItem = DispatchWorkItem { [weak self] in
-                guard let self, let workItem else { return }
-
-                let isLastBubble = index == response.count - 1
-
-                if isLastBubble {
-                    self.isCoachTyping = false
-                }
-
-                self.messages.append(CoachMessage(text: bubble, role: .coach))
-                self.pendingResponseWorkItems.removeAll { $0 === workItem }
-            }
-
-            if let workItem {
-                pendingResponseWorkItems.append(workItem)
-                DispatchQueue.main.asyncAfter(
-                    deadline: .now() + leadDelay + bubbleSpacing * Double(index),
-                    execute: workItem
-                )
-            }
-        }
-
-        if let lastBubbleDelay = response.indices.last {
-            let totalDelay = leadDelay + bubbleSpacing * Double(lastBubbleDelay + 1)
-            let typingReset = DispatchWorkItem { [weak self] in
-                guard let self else { return }
-                self.isCoachTyping = false
-            }
-            pendingResponseWorkItems.append(typingReset)
-            DispatchQueue.main.asyncAfter(deadline: .now() + totalDelay, execute: typingReset)
+            scheduleCoachBubble(
+                text: bubble,
+                delay: leadDelay + bubbleSpacing * Double(index),
+                isLastBubble: index == response.count - 1
+            )
         }
     }
 
     private func cancelPendingResponses() {
-        pendingResponseWorkItems.forEach { $0.cancel() }
-        pendingResponseWorkItems.removeAll()
+        pendingResponseTasks.values.forEach { $0.cancel() }
+        pendingResponseTasks.removeAll()
         isCoachTyping = false
     }
 
@@ -111,6 +85,32 @@ final class CoachViewModel: ObservableObject {
             CoachMessage(text: "What’s on your mind today?", role: .coach),
             CoachMessage(text: "Just exploring the app right now!", role: .user)
         ]
+    }
+
+    private func scheduleCoachBubble(text: String, delay: TimeInterval, isLastBubble: Bool) {
+        let taskID = UUID()
+        let nanoseconds = UInt64(max(0, delay) * 1_000_000_000)
+
+        let task = _Concurrency.Task { [weak self] in
+            do {
+                try await _Concurrency.Task.sleep(nanoseconds: nanoseconds)
+            } catch {
+                return
+            }
+
+            guard !_Concurrency.Task.isCancelled else { return }
+
+            await MainActor.run {
+                guard let self, !_Concurrency.Task.isCancelled else { return }
+                self.messages.append(CoachMessage(text: text, role: .coach))
+                if isLastBubble {
+                    self.isCoachTyping = false
+                }
+                self.pendingResponseTasks.removeValue(forKey: taskID)
+            }
+        }
+
+        pendingResponseTasks[taskID] = task
     }
 }
 
@@ -207,15 +207,15 @@ private struct ConversationListView: View {
             .onTapGesture {
                 onBackgroundTap()
             }
-            .onChange(of: messages) { _ in
+            .onChange(of: messages) { _, _ in
                 scrollToBottom(proxy)
             }
-            .onChange(of: isCoachTyping) { newValue in
+            .onChange(of: isCoachTyping) { _, newValue in
                 if newValue {
                     scrollToBottom(proxy)
                 }
             }
-            .onChange(of: keyboardHeight) { newValue in
+            .onChange(of: keyboardHeight) { _, newValue in
                 if newValue > 0 {
                     scrollToBottom(proxy)
                 }
@@ -227,7 +227,7 @@ private struct ConversationListView: View {
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
-        DispatchQueue.main.async {
+        _Concurrency.Task { @MainActor in
             withAnimation(.easeInOut(duration: 0.3)) {
                 proxy.scrollTo(bottomAnchorId, anchor: .bottom)
             }

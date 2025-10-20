@@ -1,41 +1,43 @@
 import SwiftUI
 
+/// Lightweight failure surface shown when the model container fails to start.
 struct StartupFailureView: View {
     let message: String
     let onRetry: @MainActor () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DesignTokens.Spacing.lg) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 44))
-                .foregroundStyle(.orange)
+                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .foregroundStyle(Color.sherpaPrimary)
+                .accessibilityHidden(true)
 
-            VStack(spacing: 8) {
-                Text("We're having trouble loading your data")
-                    .font(.title3)
+            VStack(spacing: DesignTokens.Spacing.sm) {
+                Text("We hit a snag starting Sherpa")
+                    .font(DesignTokens.Fonts.sectionTitle())
+                    .foregroundStyle(Color.sherpaTextPrimary)
                     .multilineTextAlignment(.center)
 
                 Text(message)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Fonts.body())
                     .multilineTextAlignment(.center)
+                    .foregroundStyle(Color.sherpaTextSecondary)
+                    .accessibilityIdentifier("startup-error-message")
             }
 
-            Button(
-                action: { onRetry() },
-                label: {
-                    Text("Try Again")
-                        .font(.body.bold())
-                        .frame(maxWidth: .infinity)
-                }
-            )
+            Button(action: { onRetry() }) {
+                Text("Retry")
+                    .font(DesignTokens.Fonts.button())
+                    .frame(maxWidth: .infinity)
+            }
             .buttonStyle(.borderedProminent)
             .accessibilityIdentifier("startup-retry-button")
         }
-        .padding()
-        .frame(maxWidth: 360)
+        .padding(DesignTokens.Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
+        .background(Color.sherpaBackground.ignoresSafeArea())
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("startup-failure-view")
     }
 }
 

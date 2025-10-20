@@ -11,6 +11,7 @@ import Testing
 @testable import Sherpa
 
 struct SherpaTests {
+    @MainActor
     private func makeInMemoryContext() throws -> ModelContext {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
@@ -52,6 +53,7 @@ struct SherpaTests {
     }
 
     @Test
+    @MainActor
     func scheduleServiceGeneratesInstancesWithoutDuplicates() throws {
         let context = try makeInMemoryContext()
         let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: Date().startOfDay)
@@ -76,5 +78,89 @@ struct SherpaTests {
         try ScheduleService(context: context).ensureSchedule(from: targetDate, to: targetDate)
         let instancesAfterSecondPass = try context.fetch(descriptor)
         #expect(instancesAfterSecondPass.count == 1)
+    }
+
+    @Test
+    func weeklyRecurrenceHandlesYearTransition() {
+        let calendar = Calendar(identifier: .gregorian)
+        let startComponents = DateComponents(year: 2020, month: 12, day: 28)
+        let targetComponents = DateComponents(year: 2021, month: 1, day: 4)
+
+        let startDate = calendar.date(from: startComponents)
+        let targetDate = calendar.date(from: targetComponents)
+
+        #expect(startDate != nil)
+        #expect(targetDate != nil)
+        guard let startDate, let targetDate else { return }
+
+        let weekday = startDate.weekdayIndex
+        let rule = RecurrenceRule(
+            frequency: .weekly,
+            interval: 1,
+            startDate: startDate,
+            weekdays: [weekday]
+        )
+
+        #expect(rule.occurs(on: targetDate))
+    }
+
+    @MainActor
+    @Test
+    func focusTimerTransitionsToShortBreakAfterFocus() {
+        let viewModel = FocusTimerViewModel()
+        viewModel.startSession()
+
+        let focusDuration = viewModel.currentPhaseDuration
+        fastForward(viewModel, seconds: focusDuration)
+
+        #expect(viewModel.phase == .shortBreak)
+        #expect(viewModel.totalFocusSessions == 1)
+        #expect(viewModel.completedSessionsInCycle == 1)
+        #expect(viewModel.remainingSeconds == viewModel.currentPhaseDuration)
+    }
+
+    @MainActor
+    @Test
+    func focusTimerPromotesToLongBreakAfterCycle() {
+        let viewModel = FocusTimerViewModel()
+        viewModel.startSession()
+
+        for session in 1...4 {
+            let focusDuration = viewModel.currentPhaseDuration
+            fastForward(viewModel, seconds: focusDuration)
+
+            if session < 4 {
+                #expect(viewModel.phase == .shortBreak)
+                let breakDuration = viewModel.currentPhaseDuration
+                fastForward(viewModel, seconds: breakDuration)
+                #expect(viewModel.phase == .focus)
+            }
+        }
+
+        #expect(viewModel.phase == .longBreak)
+        #expect(viewModel.totalFocusSessions == 4)
+        #expect(viewModel.completedSessionsInCycle == 4)
+    }
+
+    @MainActor
+    @Test
+    func focusTimerSkipBreakResumesFocus() {
+        let viewModel = FocusTimerViewModel()
+        viewModel.startSession()
+
+        let focusDuration = viewModel.currentPhaseDuration
+        fastForward(viewModel, seconds: focusDuration)
+
+        #expect(viewModel.phase == .shortBreak)
+        viewModel.skipBreak()
+        #expect(viewModel.phase == .focus)
+        #expect(viewModel.isRunning)
+    }
+
+    @MainActor
+    private func fastForward(_ viewModel: FocusTimerViewModel, seconds: Int) {
+        for _ in 0..<seconds {
+            viewModel.tick()
+        }
     }
 }

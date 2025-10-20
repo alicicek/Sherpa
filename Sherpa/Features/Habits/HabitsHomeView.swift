@@ -8,6 +8,7 @@
 import SwiftData
 import SwiftUI
 import UIKit
+import OSLog
 
 private struct DayCompletionSnapshot {
     let progress: Double
@@ -123,9 +124,9 @@ struct HabitsHomeView: View {
                 adjustCalendarWindowIfNeeded(for: selectedDate)
                 await ensureScheduleForVisibleRange()
             }
-            .onChange(of: selectedDate) { newValue in
+            .onChange(of: selectedDate) { _, newValue in
                 adjustCalendarWindowIfNeeded(for: newValue)
-                _Concurrency.Task {
+                _Concurrency.Task { @MainActor in
                     await ensureScheduleForVisibleRange(centeredOn: newValue)
                 }
             }
@@ -146,6 +147,7 @@ struct HabitsHomeView: View {
 
 // MARK: - Derived Values
 
+@MainActor
 private extension HabitsHomeView {
     var todaysItems: [HabitInstance] {
         let grouped = Dictionary(grouping: instances) { $0.date.startOfDay }
@@ -237,6 +239,7 @@ private extension HabitsHomeView {
 
 // MARK: - Behaviours
 
+@MainActor
 private extension HabitsHomeView {
     func ensureScheduleForVisibleRange(centeredOn date: Date? = nil) async {
         let center = date?.startOfDay ?? selectedDate
@@ -245,7 +248,7 @@ private extension HabitsHomeView {
         do {
             try ScheduleService(context: modelContext).ensureSchedule(from: start, to: end)
         } catch {
-            print("Failed to ensure schedule: \(error)")
+            Logger.habits.error("Failed to ensure schedule window: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -256,12 +259,12 @@ private extension HabitsHomeView {
         do {
             try modelContext.save()
         } catch {
-            print("Failed to update instance: \(error)")
+            Logger.habits.error("Failed to update habit instance: \(error.localizedDescription, privacy: .public)")
         }
     }
 
     func handleAddItem() {
-        _Concurrency.Task {
+        _Concurrency.Task { @MainActor in
             await ensureScheduleForVisibleRange()
         }
     }
@@ -376,7 +379,7 @@ private extension HabitsHomeView {
     func saveProgress(for instance: HabitInstance, progress: Double, profile: HabitTileProfile) {
         // Placeholder persistence hook. Replace with Supabase integration.
         let percent = profile.goal > 0 ? Int((progress / profile.goal) * 100) : 0
-        print("Saved progress for \(instance.displayName): \(Int(progress))/\(Int(profile.goal)) \(profile.unit) (\(percent)% done)")
+        Logger.habits.debug("Progress persisted for habit instance with goal: \(profile.goal, privacy: .public), progress: \(progress, privacy: .public), percent: \(percent, privacy: .public)")
     }
 
     func resetProgress(for instance: HabitInstance, profile: HabitTileProfile) {
@@ -522,7 +525,7 @@ private struct CalendarStripView: View {
                 lastSelectedDate = selectedDate
                 scrollToSelected(proxy: proxy, anchor: defaultAnchor, animated: false)
             }
-            .onChange(of: selectedDate) { newDate in
+            .onChange(of: selectedDate) { _, newDate in
                 let anchor = anchor(for: newDate, previous: lastSelectedDate)
                 lastSelectedDate = newDate
                 scrollToSelected(proxy: proxy, anchor: anchor)
@@ -535,8 +538,10 @@ private struct CalendarStripView: View {
         anchor: UnitPoint,
         animated: Bool = true
     ) {
+        let targetDate = selectedDate.startOfDay
+
         let performScroll = {
-            proxy.scrollTo(selectedDate.startOfDay, anchor: anchor)
+            proxy.scrollTo(targetDate, anchor: anchor)
         }
 
         let scrollAction = {
@@ -550,7 +555,9 @@ private struct CalendarStripView: View {
             }
         }
 
-        DispatchQueue.main.async(execute: scrollAction)
+        _Concurrency.Task { @MainActor in
+            scrollAction()
+        }
     }
 
     private func anchor(for newDate: Date, previous oldDate: Date) -> UnitPoint {
@@ -776,7 +783,7 @@ struct HabitTile: View {
             displayProgress = progress
             handleCompletionState(for: progress)
         }
-        .onChange(of: progress) { newValue in
+        .onChange(of: progress) { _, newValue in
             if isDragging == false {
                 withAnimation(.easeOut(duration: 0.18)) {
                     displayProgress = newValue
@@ -980,7 +987,7 @@ struct HabitTileDemoView: View {
 
     private func saveProgress(for item: HabitProgressItem, updatedValue: Double) {
         let percent = item.goal > 0 ? Int((updatedValue / item.goal) * 100) : 0
-        print("Demo progress for \(item.title): \(Int(updatedValue))/\(Int(item.goal)) \(item.unit) (\(percent)% done)")
+        Logger.habits.debug("Demo progress updated for sample tile (goal: \(item.goal, privacy: .public), current: \(updatedValue, privacy: .public), percent: \(percent, privacy: .public))")
     }
 }
 
@@ -1263,7 +1270,7 @@ private struct AddRoutineSheet: View {
             onComplete()
             isPresented = false
         } catch {
-            print("Failed to save: \(error)")
+            Logger.habits.error("Failed to save new routine: \(error.localizedDescription, privacy: .public)")
         }
     }
 }
