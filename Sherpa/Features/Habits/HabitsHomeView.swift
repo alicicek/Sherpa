@@ -696,6 +696,7 @@ struct HabitTile: View {
     @State private var displayProgress: Double = 0
     @State private var lastPreviewQuantized: Double = 0
     @State private var lastCommittedQuantized: Double = 0
+    @State private var lastHapticTimestamp: TimeInterval = 0
 
     private let lightFeedback = UIImpactFeedbackGenerator(style: .light)
     private let mediumFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -703,11 +704,9 @@ struct HabitTile: View {
     private let notificationFeedback = UINotificationFeedbackGenerator()
 
     private let tileHeight: CGFloat = 68
-
-    private var progressRatio: Double {
-        guard model.goal > 0 else { return 0 }
-        return min(max(progress / model.goal, 0), 1)
-    }
+    private static let dragFollowAnimation = Animation.interpolatingSpring(mass: 1.2, stiffness: 40.0, damping: 11, initialVelocity: 0)
+    private static let dragBlendFactor: Double = 0.225
+    private static let snapAnimation = Animation.timingCurve(0.2, 1.1, 0.2, 1, duration: 1.2)
 
     private var displayRatio: Double {
         guard model.goal > 0 else { return 0 }
@@ -715,7 +714,8 @@ struct HabitTile: View {
     }
 
     private var progressText: String {
-        let current = HabitTile.numberFormatter.string(from: NSNumber(value: progress)) ?? "0"
+        let valueForDisplay = isDragging ? lastPreviewQuantized : progress
+        let current = HabitTile.numberFormatter.string(from: NSNumber(value: valueForDisplay)) ?? "0"
         let goal = HabitTile.numberFormatter.string(from: NSNumber(value: model.goal)) ?? "0"
         let unit = model.unit.isEmpty ? "" : " \(model.unit)"
         return "\(current)/\(goal)\(unit)"
@@ -728,7 +728,7 @@ struct HabitTile: View {
             let fillWidth = max(width * displayRatio, 0)
             let fillCornerRadius = min(cornerRadius, fillWidth / 2)
 
-            let isComplete = progressRatio >= 1 - 0.0001
+            let isComplete = displayRatio >= 1 - 0.0001
             let fillOpacity = (isDragging || isComplete) ? 0.48 : 0.32
             let iconBackground = model.accentColor.opacity(0.2 + (displayRatio * 0.15))
 
@@ -741,7 +741,6 @@ struct HabitTile: View {
                     RoundedRectangle(cornerRadius: fillCornerRadius, style: .continuous)
                         .fill(model.accentColor.opacity(fillOpacity))
                         .frame(width: fillWidth)
-                        .animation(.easeOut(duration: 0.18), value: displayRatio)
                 }
 
                 HStack(spacing: DesignTokens.Spacing.md) {
@@ -818,6 +817,7 @@ struct HabitTile: View {
                     dragStartProgress = progress
                     hasCelebratedCompletion = progress >= model.goal - 0.0001
                     lastPreviewQuantized = quantize(progress)
+                    prepareFeedbackGenerators()
                 }
 
                 guard isDragging else { return }
@@ -838,27 +838,26 @@ struct HabitTile: View {
                 let shouldSnapToZero = predictedTarget <= model.goal * -0.05 || value.translation.width <= -totalWidth * 0.6
 
                 if shouldSnapToGoal {
-                    displayProgress = model.goal
+                    rigidFeedback.prepare()
                     commitProgress(to: model.goal)
                     rigidFeedback.impactOccurred()
                 } else if shouldSnapToZero {
-                    displayProgress = 0
+                    rigidFeedback.prepare()
                     commitProgress(to: 0)
                     rigidFeedback.impactOccurred()
                 } else if model.goal <= model.step {
                     if target >= model.goal * 0.5 {
-                        displayProgress = model.goal
+                        rigidFeedback.prepare()
                         commitProgress(to: model.goal)
                         rigidFeedback.impactOccurred()
                     } else {
-                        displayProgress = 0
+                        rigidFeedback.prepare()
                         commitProgress(to: 0)
                         if dragStartProgress > 0 {
                             rigidFeedback.impactOccurred()
                         }
                     }
                 } else {
-                    displayProgress = max(0, min(model.goal, target))
                     commitProgress(to: target)
                 }
 
@@ -869,12 +868,13 @@ struct HabitTile: View {
 
     private func previewProgress(with target: Double) {
         let clamped = max(0, min(model.goal, target))
-        displayProgress = clamped
-        progress = clamped
+        withAnimation(Self.dragFollowAnimation) {
+            displayProgress += (clamped - displayProgress) * Self.dragBlendFactor
+        }
 
         let quantized = quantize(clamped)
         if abs(quantized - lastPreviewQuantized) > 0.0001 {
-            handleStepHaptics(previous: lastPreviewQuantized, newValue: quantized)
+            emitStepHaptic(from: lastPreviewQuantized, to: quantized)
             lastPreviewQuantized = quantized
         }
         handleCompletionState(for: clamped)
@@ -890,58 +890,69 @@ struct HabitTile: View {
             lastPreviewQuantized = quantized
             lastCommittedQuantized = quantized
             handleCompletionState(for: quantized)
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(Self.snapAnimation) {
                 displayProgress = quantized
             }
             return
         }
 
-        withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.85)) {
-            progress = quantized
-        }
+        let startProgress = displayProgress
+        let targetProgress = quantized
+
+        progress = quantized
         onProgressChange(quantized)
 
         if abs(quantized - lastPreviewQuantized) > 0.0001 {
-            handleStepHaptics(previous: previousQuantized, newValue: quantized)
+            emitStepHaptic(from: previousQuantized, to: quantized)
             lastPreviewQuantized = quantized
         }
 
         handleCompletionState(for: quantized)
         lastCommittedQuantized = quantized
 
-        withAnimation(.easeOut(duration: 0.2)) {
-            displayProgress = quantized
+        withAnimation(Self.snapAnimation) {
+            displayProgress = targetProgress
         }
     }
 
-    private func handleStepHaptics(previous: Double, newValue: Double) {
+    private func emitStepHaptic(from previous: Double, to newValue: Double) {
         guard model.step > 0 else { return }
 
         let previousIndex = Int((previous / model.step).rounded(.down))
         let newIndex = Int((newValue / model.step).rounded(.down))
+        let delta = newIndex - previousIndex
 
-        guard newIndex != previousIndex else { return }
+        guard delta != 0 else { return }
+
+        let now = ProcessInfo.processInfo.systemUptime
+        if now - lastHapticTimestamp < 0.035 { return }
+        lastHapticTimestamp = now
 
         if newValue >= model.goal - 0.0001 {
-            if hasCelebratedCompletion == false {
-                notificationFeedback.notificationOccurred(.success)
-                hasCelebratedCompletion = true
-            }
-        } else {
-            hasCelebratedCompletion = false
-            let delta = newIndex - previousIndex
-            let iterations = min(abs(delta), 6)
-
-            if delta > 0 {
-                for _ in 0..<iterations {
-                    mediumFeedback.impactOccurred()
-                }
-            } else {
-                for _ in 0..<iterations {
-                    lightFeedback.impactOccurred()
-                }
-            }
+            guard hasCelebratedCompletion == false else { return }
+            notificationFeedback.prepare()
+            notificationFeedback.notificationOccurred(.success)
+            hasCelebratedCompletion = true
+            return
         }
+
+        hasCelebratedCompletion = false
+        let normalizedIntensity = min(1.0, 0.45 + 0.1 * Double(abs(delta)))
+
+        if delta > 0 {
+            mediumFeedback.prepare()
+            mediumFeedback.impactOccurred(intensity: CGFloat(normalizedIntensity))
+        } else {
+            lightFeedback.prepare()
+            lightFeedback.impactOccurred(intensity: CGFloat(normalizedIntensity))
+        }
+    }
+
+    private func prepareFeedbackGenerators() {
+        mediumFeedback.prepare()
+        lightFeedback.prepare()
+        notificationFeedback.prepare()
+        rigidFeedback.prepare()
     }
 
     private func handleCompletionState(for value: Double) {
