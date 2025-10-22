@@ -19,26 +19,26 @@ final class FocusTimerViewModel: ObservableObject {
         var title: String {
             switch self {
             case .idle:
-                return "Ready to Focus"
+                return L10n.string("focus.timer.phase.ready")
             case .focus:
-                return "Focus Session"
+                return L10n.string("focus.timer.phase.focus")
             case .shortBreak:
-                return "Short Break"
+                return L10n.string("focus.timer.phase.shortBreak")
             case .longBreak:
-                return "Long Break"
+                return L10n.string("focus.timer.phase.longBreak")
             }
         }
 
         var subtitle: String {
             switch self {
             case .idle:
-                return "Tap start to begin your next Pomodoro."
+                return L10n.string("focus.timer.subtitle.ready")
             case .focus:
-                return "Stay in flow for 25 minutes."
+                return L10n.string("focus.timer.subtitle.focus")
             case .shortBreak:
-                return "Reset with a 5 minute breather."
+                return L10n.string("focus.timer.subtitle.shortBreak")
             case .longBreak:
-                return "Celebrate with a 15 minute break."
+                return L10n.string("focus.timer.subtitle.longBreak")
             }
         }
     }

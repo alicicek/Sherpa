@@ -13,7 +13,7 @@ struct StartupFailureView: View {
                 .accessibilityHidden(true)
 
             VStack(spacing: DesignTokens.Spacing.sm) {
-                Text("We hit a snag starting Sherpa")
+                Text(L10n.string("startup.title"))
                     .font(DesignTokens.Fonts.sectionTitle())
                     .foregroundStyle(Color.sherpaTextPrimary)
                     .multilineTextAlignment(.center)
@@ -26,7 +26,7 @@ struct StartupFailureView: View {
             }
 
             Button(action: { onRetry() }) {
-                Text("Retry")
+                Text(L10n.string("startup.retry"))
                     .font(DesignTokens.Fonts.button())
                     .frame(maxWidth: .infinity)
             }

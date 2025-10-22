@@ -22,8 +22,8 @@ struct AddRoutineSheet: View {
 
         var label: String {
             switch self {
-            case .habit: return "Habit"
-            case .task: return "Task"
+            case .habit: return L10n.string("addroutine.type.picker.habit")
+            case .task: return L10n.string("addroutine.type.picker.task")
             }
         }
 
@@ -76,10 +76,10 @@ struct AddRoutineSheet: View {
 
     private var cadenceLabel: String {
         switch frequency {
-        case .weekly: return "week(s)"
-        case .monthly: return "month(s)"
+        case .weekly: return L10n.string("addroutine.cadence.weeks")
+        case .monthly: return L10n.string("addroutine.cadence.months")
         case .daily: fallthrough
-        @unknown default: return "day(s)"
+        @unknown default: return L10n.string("addroutine.cadence.days")
         }
     }
 
@@ -95,7 +95,7 @@ struct AddRoutineSheet: View {
                     .pickerStyle(.segmented)
 
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-                        Text("Suggestions")
+                        Text(L10n.string("addroutine.suggestions.heading"))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.sherpaTextSecondary)
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -127,7 +127,7 @@ struct AddRoutineSheet: View {
                     }
 
                     VStack(spacing: DesignTokens.Spacing.md) {
-                        TextField("Title", text: $title)
+                        TextField(L10n.string("addroutine.field.title"), text: $title)
                             .textInputAutocapitalization(.words)
                             .padding()
                             .background(
@@ -135,7 +135,7 @@ struct AddRoutineSheet: View {
                                     .fill(Color(.secondarySystemBackground))
                             )
 
-                        TextField("Notes (optional)", text: $detail, axis: .vertical)
+                        TextField(L10n.string("addroutine.field.notes"), text: $detail, axis: .vertical)
                             .lineLimit(2...4)
                             .padding()
                             .background(
@@ -144,19 +144,21 @@ struct AddRoutineSheet: View {
                             )
 
                         VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-                            Text("Schedule")
+                            Text(L10n.string("addroutine.schedule.heading"))
                                 .font(.headline.weight(.semibold))
                                 .foregroundStyle(Color.sherpaTextPrimary)
 
                             Picker("Frequency", selection: $frequency) {
                                 ForEach(RecurrenceFrequency.allCases) { freq in
-                                    Text(freq.displayName).tag(freq)
+                                    Text(L10n.string("addroutine.frequency.\(freq.rawValue)"))
+                                        .tag(freq)
                                 }
                             }
                             .pickerStyle(.segmented)
 
                             Stepper(value: $interval, in: 1...30) {
-                                Text("Every \(interval) \(cadenceLabel)")
+                                let cadence = "\(interval) \(cadenceLabel)"
+                                Text(L10n.string("addroutine.stepper.every", cadence))
                             }
 
                             if frequency == .weekly {
@@ -164,7 +166,7 @@ struct AddRoutineSheet: View {
                             }
 
                             if itemKind == .task && frequency == .daily {
-                                DatePicker("Due Date", selection: $dueDate, displayedComponents: [.date])
+                                DatePicker(L10n.string("addroutine.dueDate.label"), selection: $dueDate, displayedComponents: [.date])
                             }
                         }
                         .padding()
@@ -178,13 +180,13 @@ struct AddRoutineSheet: View {
                 .padding(.top, DesignTokens.Spacing.lg)
                 .padding(.bottom, DesignTokens.Spacing.xl)
             }
-            .navigationTitle(itemKind == .habit ? "New Habit" : "New Task")
+            .navigationTitle(itemKind == .habit ? L10n.string("addroutine.sheet.title.habit") : L10n.string("addroutine.sheet.title.task"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(L10n.string("addroutine.button.cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
+                    Button(L10n.string("addroutine.button.save")) { save() }
                         .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -221,10 +223,13 @@ struct AddRoutineSheet: View {
         switch itemKind {
         case .habit:
             guard let recurrence else { return }
+            let paletteCount = max(1, DesignTokens.cardPalettes.count)
+            let paletteIndex = Int.random(in: 0..<paletteCount)
             let habit = Habit(
                 title: trimmedTitle,
                 detail: detail.isEmpty ? nil : detail,
-                recurrenceRule: recurrence
+                recurrenceRule: recurrence,
+                paletteIdentifier: paletteIndex
             )
             modelContext.insert(habit)
         case .task:
@@ -286,18 +291,18 @@ struct SkipNoteSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Reason for skipping") {
-                    TextField("Type your note…", text: $note, axis: .vertical)
+                Section(L10n.string("addroutine.skip.section.title")) {
+                    TextField(L10n.string("addroutine.skip.reason.placeholder"), text: $note, axis: .vertical)
                         .lineLimit(3...5)
                 }
             }
-            .navigationTitle("Skip with note")
+            .navigationTitle(L10n.string("addroutine.skip.title"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(L10n.string("generic.cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(L10n.string("addroutine.button.save")) {
                         onSave(note.trimmingCharacters(in: .whitespacesAndNewlines))
                         dismiss()
                     }

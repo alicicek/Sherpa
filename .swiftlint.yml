@@ -1,0 +1,19 @@
+disabled_rules:
+  - line_length
+opt_in_rules:
+  - explicit_acl
+  - closure_end_indentation
+  - redundant_nil_coalescing
+included:
+  - Sherpa
+excluded:
+  - SherpaUITests
+  - SherpaTests
+analyzer_rules:
+  - unused_import
+custom_rules:
+  no_unmanaged_task:
+    included: ".*\\.swift"
+    name: "Prefer structured Task"
+    regex: "_Concurrency\\.Task"
+    message: "Use Task { } or .task(id:) unless you need detached semantics."

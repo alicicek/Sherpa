@@ -1,0 +1,27 @@
+name: Sherpa CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Mint tools
+        run: |
+          brew install mint
+          mint install realm/SwiftLint
+          mint install nicklockwood/SwiftFormat
+          mint install peripheryapp/periphery
+          sudo gem install xcpretty
+      - name: Lint
+        run: mint run swiftlint --strict
+      - name: Format Check
+        run: mint run swiftformat --lint .
+      - name: Dead Code Check
+        run: mint run periphery scan --config periphery.yml
+      - name: Unit & UI Tests
+        run: xcodebuild -scheme Sherpa -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test | xcpretty

@@ -63,7 +63,7 @@ private extension FocusHomeView {
                         .padding(.top, DesignTokens.Spacing.xl)
                 }
             }
-            .navigationTitle("Focus")
+            .navigationTitle(L10n.string("focus.navigation.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
         }
@@ -90,7 +90,7 @@ private extension FocusHomeView {
         }
     }
     var phaseHeader: some View {
-        Text(viewModel.isInBreak ? "Break" : "Flow")
+        Text(L10n.string(viewModel.isInBreak ? "focus.phase.break" : "focus.phase.flow"))
             .font(.system(.title3, design: .rounded).weight(.medium))
             .foregroundStyle(Color.sherpaTextPrimary)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -167,7 +167,7 @@ private extension FocusHomeView {
                     )
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Reset session")
+            .accessibilityLabel(L10n.string("focus.reset"))
             .accessibilityIdentifier("focusResetButton")
 
             if viewModel.isInBreak {
@@ -184,7 +184,7 @@ private extension FocusHomeView {
                         )
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Skip break")
+                .accessibilityLabel(L10n.string("focus.skip.break"))
                 .accessibilityIdentifier("focusSkipBreakButton")
             }
         }
@@ -193,7 +193,7 @@ private extension FocusHomeView {
 
     var celebrationBadge: some View {
         VStack {
-            Text("Focus streak +\(focusXPReward) XP 🎉")
+            Text(L10n.string("focus.badge.copy", focusXPReward))
                 .font(.headline.weight(.semibold))
                 .padding()
                 .background(
@@ -231,14 +231,11 @@ private extension FocusHomeView {
     }
 
     func formattedAccessibilityTime(from seconds: Int) -> String {
-        let minutes = seconds / 60
-        let remainder = seconds % 60
-        var components: [String] = []
-        if minutes > 0 {
-            components.append("\(minutes) \(minutes == 1 ? "minute" : "minutes")")
-        }
-        components.append("\(remainder) \(remainder == 1 ? "second" : "seconds")")
-        return components.joined(separator: " ")
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = seconds >= 60 ? [.minute, .second] : [.second]
+        formatter.unitsStyle = .full
+        formatter.zeroFormattingBehavior = .dropLeading
+        return formatter.string(from: TimeInterval(seconds)) ?? ""
     }
 
     func fillColor(for index: Int) -> Color {
@@ -251,8 +248,8 @@ private extension FocusHomeView {
     }
 
     var primaryControlAccessibilityLabel: String {
-        if viewModel.phase == .idle { return "Start focus session" }
-        return viewModel.isRunning ? "Pause timer" : "Resume timer"
+        if viewModel.phase == .idle { return L10n.string("focus.primary.start") }
+        return viewModel.isRunning ? L10n.string("focus.primary.pause") : L10n.string("focus.primary.resume")
     }
 }
 

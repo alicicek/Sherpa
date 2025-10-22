@@ -23,39 +23,39 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             HabitsHomeView()
                 .tabItem {
-                    Label("Habits", systemImage: "house.lodge")
+                    Label(L10n.string("tab.habits.title"), systemImage: "house.lodge")
                 }
                 .tag(AppTab.habits)
 
             FocusHomeView()
             .tabItem {
-                Label("Focus", systemImage: "binoculars")
+                Label(L10n.string("tab.focus.title"), systemImage: "binoculars")
             }
             .tag(AppTab.focus)
 
             CoachHomeView()
                 .tabItem {
-                    Label("Coach", systemImage: "bubble.left.and.bubble.right")
+                    Label(L10n.string("tab.coach.title"), systemImage: "bubble.left.and.bubble.right")
                 }
                 .tag(AppTab.coach)
 
             TabPlaceholderView(
-                title: "Insights",
-                message: "Review weekly progress, heatmaps, and patterns to stay motivated.",
+                title: L10n.string("tab.insights.title"),
+                message: L10n.string("placeholder.insights.message"),
                 illustrationSymbol: "chart.bar.doc.horizontal"
             )
             .tabItem {
-                Label("Insights", systemImage: "chart.bar.doc.horizontal")
+                Label(L10n.string("tab.insights.title"), systemImage: "chart.bar.doc.horizontal")
             }
             .tag(AppTab.insights)
 
             TabPlaceholderView(
-                title: "Leaderboard",
-                message: "Climb from Hilltop to Everest as you compete with friends each week.",
+                title: L10n.string("tab.leaderboard.title"),
+                message: L10n.string("placeholder.leaderboard.message"),
                 illustrationSymbol: "mountain.2"
             )
             .tabItem {
-                Label("Leaderboard", systemImage: "mountain.2")
+                Label(L10n.string("tab.leaderboard.title"), systemImage: "mountain.2")
             }
             .tag(AppTab.leaderboard)
         }
@@ -97,7 +97,7 @@ private struct TabPlaceholderView: View {
                     }
 
                     Button(action: {}) {
-                        Label("Coming Soon", systemImage: "sparkles")
+                        Label(L10n.string("placeholder.comingSoon.label"), systemImage: "sparkles")
                             .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: 44) // Apple HIG minimum touch target.

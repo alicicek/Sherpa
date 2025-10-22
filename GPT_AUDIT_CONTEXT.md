@@ -1,10 +1,27 @@
-//
-//  HabitsCalendarStrip.swift
-//  Sherpa
-//
-//  Extracted from HabitsHomeView to keep the home layout focused on composition.
-//
+# Sherpa Habits Calendar Strip – Audit Context
 
+## Product Snapshot
+- Platform: iOS 17+, SwiftUI + SwiftData, Swift 5.9 language mode (Swift 6 hardening later).
+- Concurrency: prefer Swift concurrency, annotate UI-affecting types with `@MainActor`, plan for strict Sendable checking.
+- Design system: use `DesignTokens`, shared helpers in `Sherpa/Utilities`, rounded playful visuals, accessible labels.
+- Data layer: SwiftData models (`Habit`, `HabitInstance`, `RecurrenceRule`) with scheduling handled by `ScheduleService` to avoid duplicate instances.
+
+## File Under Audit
+- Path: `Sherpa/Features/Habits/HabitsCalendarStrip.swift`
+- Purpose: Horizontally scrollable strip that shows daily habit completion state and allows selecting the active day on the Habits home screen.
+- Key responsibilities
+  - Maintain scroll position around `selectedDate` as users tap different days.
+  - Render completion progress, eligibility, and accessibility labels per day.
+  - Respect design tokens for spacing, typography, and motion preferences.
+
+## Known Constraints & Expectations
+- Preserve `ScrollView` behaviour: day tiles must keep existing simultaneous gestures with parent scroll views.
+- Avoid regressing animations—respect `accessibilityReduceMotion` and keep smooth spring scrolling when motion allowed.
+- Future Swift 6 pass will enable strict concurrency and SwiftLint/SwiftFormat; flag anything that may break under stricter compile-time checks.
+- No third-party dependencies; lean on existing helpers and tokens.
+
+## Code Snapshot
+```swift
 import SwiftUI
 
 struct DayCompletionSnapshot {
@@ -87,7 +104,7 @@ struct CalendarStripView: View {
             }
         }
 
-        _Concurrency.Task { @MainActor in
+        Task { @MainActor in
             scrollAction()
         }
     }
@@ -224,3 +241,16 @@ struct CalendarStripCell: View {
         return formatter
     }()
 }
+```
+
+## Audit Prompts for ChatGPT 5 Pro
+- Verify calendar scrolling logic remains safe for Swift 6 strict concurrency (e.g., `Task` usage, `@MainActor` scope).
+- Evaluate whether the anchor calculation handles edge cases (single date, non-contiguous arrays, DST changes).
+- Review view modifiers for performance/accessibility: redundant `.padding(.horizontal, 0)?`, opacity calculations, color usage.
+- Confirm progress rendering clamps values correctly and suggest any simplifications or extracted helpers.
+- Suggest tests or previews to cover current behaviour and prevent regressions.
+
+## Additional Files Worth Inspecting (if more context needed)
+- `Sherpa/Features/Habits/HabitsHomeView.swift` — integrates this strip into the main view hierarchy.
+- `Sherpa/DesignTokens.swift` — defines spacing, colors, and typography referenced here.
+- `Sherpa/Utilities/Date+Helpers.swift` — provides `startOfDay` helper used for normalization.

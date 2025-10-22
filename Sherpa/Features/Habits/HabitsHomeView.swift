@@ -53,17 +53,17 @@ struct HabitsHomeView: View {
                                         viewModel.handleProgressChange(for: instance, profile: profile, newValue: newValue)
                                     }
                                     .contextMenu {
-                                        Button("Reset progress", role: .destructive) {
+                                        Button(L10n.string("habits.context.reset"), role: .destructive) {
                                             viewModel.resetProgress(for: instance, profile: profile)
                                         }
 
                                         Divider()
 
-                                        Button("Skip today", role: .destructive) {
+                                        Button(L10n.string("habits.context.skip"), role: .destructive) {
                                             viewModel.skip(instance: instance, profile: profile)
                                         }
 
-                                        Button("Skip with note") {
+                                        Button(L10n.string("habits.context.skipWithNote")) {
                                             skipNoteTarget = instance
                                         }
                                     }
@@ -80,20 +80,10 @@ struct HabitsHomeView: View {
                 }
                 .scrollDisabled(isAnyTileDragging)
             }
-            .task {
+            .task(id: viewModel.selectedDate) {
+                let selected = viewModel.selectedDate
                 viewModel.configureIfNeeded(modelContext: modelContext)
-                viewModel.adjustCalendarWindowIfNeeded(for: viewModel.selectedDate)
-                await viewModel.ensureScheduleForVisibleRange()
-                viewModel.reloadInstances()
-                viewModel.pruneProgressCache()
-            }
-            .onChange(of: viewModel.selectedDate) { _, newValue in
-                viewModel.adjustCalendarWindowIfNeeded(for: newValue)
-                _Concurrency.Task { @MainActor in
-                    await viewModel.ensureScheduleForVisibleRange(centeredOn: newValue)
-                    viewModel.reloadInstances(centeredOn: newValue)
-                    viewModel.pruneProgressCache()
-                }
+                await viewModel.refreshSelection(to: selected)
             }
             .sheet(isPresented: $showingAddSheet) {
                 AddRoutineSheet(isPresented: $showingAddSheet, onComplete: viewModel.handleAddItem)
@@ -118,45 +108,49 @@ private struct HabitsHeroCard: View {
     let xpValue: Int
 
     var body: some View {
-        let cardShape = RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous)
+        SherpaCard(
+            backgroundStyle: .solid(Color.white.opacity(0.95)),
+            strokeColor: Color.white,
+            strokeOpacity: 0.3,
+            padding: 0,
+            shadowColor: Color.black.opacity(0.06)
+        ) {
+            ZStack(alignment: .topLeading) {
+                Image("HabitsHeroIllustration")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+                    .accessibilityHidden(true)
 
-        ZStack(alignment: .topLeading) {
-            Image("HabitsHeroIllustration")
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
-                .accessibilityHidden(true)
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.85),
+                        Color.white.opacity(0.0)
+                    ],
+                    startPoint: .top,
+                    endPoint: .center
+                )
 
-            LinearGradient(
-                colors: [
-                    Color.white.opacity(0.85),
-                    Color.white.opacity(0.0)
-                ],
-                startPoint: .top,
-                endPoint: .center
-            )
-
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-                Text(leagueName)
-                    .font(.system(size: 30, weight: .heavy, design: .rounded))
-                    .foregroundStyle(Color.sherpaTextPrimary)
-
-                HStack(spacing: DesignTokens.Spacing.sm) {
-                    Image(systemName: "bolt.fill")
-                        .foregroundStyle(DesignTokens.Colors.accentGold)
-                    Text("\(xpValue) XP")
-                        .font(.subheadline.weight(.semibold))
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                    Text(leagueName)
+                        .font(.system(size: 30, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color.sherpaTextPrimary)
+
+                    HStack(spacing: DesignTokens.Spacing.sm) {
+                        Image(systemName: "bolt.fill")
+                            .foregroundStyle(DesignTokens.Colors.accentGold)
+                        Text("\(xpValue) XP")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.sherpaTextPrimary)
+                    }
                 }
+                .padding(DesignTokens.Spacing.xl)
             }
-            .padding(DesignTokens.Spacing.xl)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large, style: .continuous))
         }
         .frame(height: 240)
         .frame(maxWidth: .infinity)
-        .clipShape(cardShape)
-        .overlay(cardShape.stroke(Color.white.opacity(0.3), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.06), radius: 16, y: 10)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(leagueName) with \(xpValue) XP on \(date.formatted(date: .complete, time: .omitted))")
     }
@@ -166,7 +160,7 @@ private struct HabitsHeroCard: View {
 
 private struct EmptyStateView: View {
     var body: some View {
-        Text("All goals completed today, tap below to create new goal")
+        Text(L10n.string("habits.emptyState.message"))
             .font(DesignTokens.Fonts.body().weight(.semibold))
             .foregroundStyle(Color.sherpaTextSecondary)
             .multilineTextAlignment(.center)

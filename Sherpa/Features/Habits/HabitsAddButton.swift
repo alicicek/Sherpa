@@ -11,15 +11,16 @@ struct AddHabitsButton: View {
     let action: () -> Void
 
     var body: some View {
+        let title = L10n.string("habits.addButton.title").uppercased()
         Button(action: action) {
-            Text("ADD HABITS")
+            Text(title)
                 .font(.system(.headline, design: .rounded).weight(.bold))
                 .foregroundStyle(Color.white)
                 .kerning(1.1)
                 .accessibilityHidden(true)
         }
         .buttonStyle(AddHabitsButtonStyle())
-        .accessibilityLabel("Add a new habit")
+        .accessibilityLabel(L10n.string("habits.addButton.label"))
     }
 }
 

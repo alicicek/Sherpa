@@ -1,0 +1,90 @@
+/* Tab titles */
+"tab.habits.title" = "Habits";
+"tab.focus.title" = "Focus";
+"tab.coach.title" = "Coach";
+"tab.insights.title" = "Insights";
+"tab.leaderboard.title" = "Leaderboard";
+
+/* Tab placeholder content */
+"placeholder.insights.message" = "Review weekly progress, heatmaps, and patterns to stay motivated.";
+"placeholder.leaderboard.message" = "Climb from Hilltop to Everest as you compete with friends each week.";
+"placeholder.comingSoon.label" = "Coming Soon";
+
+/* Habits */
+"habits.emptyState.message" = "All goals completed today, tap below to create new goal";
+"habits.addButton.label" = "Add a new habit";
+"habits.addButton.title" = "Add Habits";
+"habits.context.reset" = "Reset progress";
+"habits.context.skip" = "Skip today";
+"habits.context.skipWithNote" = "Skip with note";
+"habits.tile.accessibility.hint" = "Swipe horizontally to adjust progress";
+
+/* Add routine */
+"addroutine.sheet.title.habit" = "New Habit";
+"addroutine.sheet.title.task" = "New Task";
+"addroutine.type.picker.habit" = "Habit";
+"addroutine.type.picker.task" = "Task";
+"addroutine.suggestions.heading" = "Suggestions";
+"addroutine.field.title" = "Title";
+"addroutine.field.notes" = "Notes (optional)";
+"addroutine.schedule.heading" = "Schedule";
+"addroutine.frequency.daily" = "Daily";
+"addroutine.frequency.weekly" = "Weekly";
+"addroutine.frequency.monthly" = "Monthly";
+"addroutine.stepper.every" = "Every %@";
+"addroutine.cadence.days" = "day(s)";
+"addroutine.cadence.weeks" = "week(s)";
+"addroutine.cadence.months" = "month(s)";
+"addroutine.dueDate.label" = "Due Date";
+"addroutine.button.cancel" = "Cancel";
+"addroutine.button.save" = "Save";
+"addroutine.skip.reason.placeholder" = "Type your note…";
+"addroutine.skip.title" = "Skip with note";
+"addroutine.skip.section.title" = "Reason for skipping";
+
+/* Focus */
+"focus.timer.phase.ready" = "Ready to Focus";
+"focus.timer.phase.focus" = "Focus Session";
+"focus.timer.phase.shortBreak" = "Short Break";
+"focus.timer.phase.longBreak" = "Long Break";
+"focus.phase.flow" = "Flow";
+"focus.phase.break" = "Break";
+"focus.navigation.title" = "Focus";
+"focus.timer.subtitle.ready" = "Tap start to begin your next Pomodoro.";
+"focus.timer.subtitle.focus" = "Stay in flow for 25 minutes.";
+"focus.timer.subtitle.shortBreak" = "Reset with a 5 minute breather.";
+"focus.timer.subtitle.longBreak" = "Celebrate with a 15 minute break.";
+"focus.primary.start" = "Start focus session";
+"focus.primary.pause" = "Pause timer";
+"focus.primary.resume" = "Resume timer";
+"focus.reset" = "Reset session";
+"focus.skip.break" = "Skip break";
+"focus.badge.copy" = "Focus streak +%d XP 🎉";
+
+/* Coach */
+"coach.navigation.title" = "Sherpa Coach";
+"coach.message.placeholder" = "Type a message";
+"coach.button.back" = "Back";
+"coach.button.send" = "Send message";
+"coach.typing" = "Coach is typing";
+"coach.accessibility.user" = "You said, %@";
+"coach.accessibility.coach" = "Coach said, %@";
+"coach.seed.hello" = "Hey, I’m Summit — your Sherpa coach.";
+"coach.seed.intro" = "Here for pep-talks, quick nudges, and the occasional reality check.";
+"coach.seed.prompt" = "What’s on your mind today?";
+"coach.seed.user" = "Just exploring the app right now!";
+"coach.response.affirm1" = "Love that energy!";
+"coach.response.affirm2" = "Remember: tiny wins count just as much as the big swings.";
+"coach.response.prompt1" = "Want help lining up one small action for today?";
+"coach.response.listen1" = "Totally hear you.";
+"coach.response.listen2" = "Let’s zoom into the next hour instead of the whole day.";
+"coach.response.prompt2" = "What’s one thing you could wrap up before you take a break?";
+"coach.response.encourage1" = "You’re building momentum, even if it doesn’t feel like it yet.";
+"coach.response.prompt3" = "How about we celebrate one win you’ve had this week?";
+
+/* Startup */
+"startup.title" = "We hit a snag starting Sherpa";
+"startup.retry" = "Retry";
+
+/* Generic */
+"generic.cancel" = "Cancel";

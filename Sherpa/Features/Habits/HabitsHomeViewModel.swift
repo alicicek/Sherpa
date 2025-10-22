@@ -179,17 +179,50 @@ final class HabitsHomeViewModel: ObservableObject {
     }
 
     func handleAddItem() {
-        _Concurrency.Task { @MainActor in
-            await ensureScheduleForVisibleRange()
-            reloadInstances()
-            pruneProgressCache()
+        _Concurrency.Task {
+            await refreshSelection(to: selectedDate)
         }
     }
 
+    func refreshSelection(to date: Date) async {
+        adjustCalendarWindowIfNeeded(for: date)
+        await ensureScheduleForVisibleRange(centeredOn: date)
+        reloadInstances(centeredOn: date)
+        pruneProgressCache()
+    }
+
     func stableColorIndex(for instance: HabitInstance) -> Int {
-        let paletteCount = DesignTokens.cardPalettes.count
-        guard paletteCount > 0 else { return 0 }
-        return abs(instance.persistentModelID.hashValue) % paletteCount
+        let palettes = DesignTokens.cardPalettes
+        guard palettes.isEmpty == false else { return 0 }
+
+        if let habit = instance.habit {
+            let count = palettes.count
+            if count > 0 {
+                let raw = habit.paletteIdentifier
+                let normalized = ((raw % count) + count) % count
+                return normalized
+            }
+        }
+
+        let token = stableIdentifier(for: instance.persistentModelID)
+        var hash: UInt64 = 0xcbf29ce484222325 // FNV-1a offset basis
+        for scalar in token.unicodeScalars {
+            hash ^= UInt64(scalar.value)
+            hash &*= UInt64(0x100000001b3)
+        }
+
+        return Int(hash % UInt64(palettes.count))
+    }
+
+    private func stableIdentifier(for identifier: PersistentIdentifier) -> String {
+        let description = String(describing: identifier)
+        guard let start = description.firstIndex(of: "<"),
+              let end = description.lastIndex(of: ">"),
+              start < end else {
+            return description
+        }
+        let range = description.index(after: start)..<end
+        return String(description[range])
     }
 
     func habitProfile(for instance: HabitInstance) -> HabitTileProfile {

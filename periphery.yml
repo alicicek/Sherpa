@@ -1,0 +1,7 @@
+schemes:
+  - Sherpa
+targets:
+  - Sherpa
+retain_public: true
+retain_objc_accessors: true
+output: reports/periphery.txt

@@ -152,6 +152,7 @@ final class Habit {
     var detail: String?
     var createdAt: Date
     var colorHex: String?
+    var paletteIdentifier: Int = 0
     var isArchived: Bool
 
     @Relationship(deleteRule: .cascade, inverse: \HabitInstance.habit)
@@ -166,12 +167,14 @@ final class Habit {
         createdAt: Date = .now,
         colorHex: String? = nil,
         isArchived: Bool = false,
-        recurrenceRule: RecurrenceRule
+        recurrenceRule: RecurrenceRule,
+        paletteIdentifier: Int = 0
     ) {
         self.title = title
         self.detail = detail
         self.createdAt = createdAt
         self.colorHex = colorHex
+        self.paletteIdentifier = paletteIdentifier
         self.isArchived = isArchived
         self.instances = []
         self.recurrenceRule = recurrenceRule
