@@ -74,6 +74,17 @@ Document TODOs that should happen during the Swift 6 upgrade sprint:
 - **Review assumptions with the team/agent.** Summarise what changed, what still fails, and which hypotheses were disproven. Escalate to docs/Context7/Stack Overflow when the mental model is unclear—don’t stack speculative patches.
 - **Document the fix.** When the underlying pattern is tricky (like the habit tile drag), add comments or playbook notes so we don’t reintroduce the same issue later.
 
+## 12. Keep Feature Files Modular and Bounded
+- **Aim for feature-based grouping.** Follow Apple and industry guidance[^swiftui-structure] by keeping each feature folder composed of focused files: the container view, reusable child views, and screen-specific sheets/helpers.
+- **Split when files exceed ~400 lines.** Large SwiftUI files become unsearchable for humans and AI coders. When a file grows beyond a few hundred lines—or mixes unrelated concerns—move subviews/logic into dedicated files.
+- **Use MVVM-light.** Views stay declarative; move fetch orchestration, caching, and derived values into small view models (`ObservableObject` or structs) so we follow the MVVM-style separation recommended for SwiftUI[^mvvm].
+- **Prefer stable identifiers.** When deriving colours or styles, hash `PersistentIdentifier` (or another stable key) instead of relying on list order.
+- **Document why patterns exist.** If you intentionally keep a fill view always rendered or disable implicit animations, add a short comment so the intent survives future changes.
+- **Automate the checks.** During code review, flag new files that exceed the agreed size or mingle responsibilities and request a split before debt accrues.
+
+[^swiftui-structure]: See “Feature-Based Project Structure for SwiftUI” and Apple’s “Exploring the structure of a SwiftUI app.”
+[^mvvm]: e.g. Apple’s MVVM guidance and “Build your first SwiftUI app (Part 2): Project architecture.”
+
 ---
 
 ### Quick Checklist (per task)
