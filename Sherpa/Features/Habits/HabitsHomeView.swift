@@ -704,9 +704,9 @@ struct HabitTile: View {
     private let notificationFeedback = UINotificationFeedbackGenerator()
 
     private let tileHeight: CGFloat = 68
-    private static let dragFollowAnimation = Animation.interpolatingSpring(mass: 1.2, stiffness: 40.0, damping: 11, initialVelocity: 0)
+    private static let dragFollowAnimation = Animation.interpolatingSpring(mass: 1.1, stiffness: 120, damping: 20, initialVelocity: 0)
     private static let dragBlendFactor: Double = 0.225
-    private static let snapAnimation = Animation.timingCurve(0.2, 1.1, 0.2, 1, duration: 1.2)
+    private static let snapAnimation = Animation.spring(response: 0.32, dampingFraction: 0.85, blendDuration: 0)
 
     private var displayRatio: Double {
         guard model.goal > 0 else { return 0 }
@@ -729,26 +729,25 @@ struct HabitTile: View {
             let fillCornerRadius = min(cornerRadius, fillWidth / 2)
 
             let isComplete = displayRatio >= 1 - 0.0001
-            let fillOpacity = (isDragging || isComplete) ? 0.48 : 0.32
-            let iconBackground = model.accentColor.opacity(0.2 + (displayRatio * 0.15))
+            let fillOpacity = isComplete ? 0.48 : 0.32
 
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(model.backgroundColor)
 
-                if fillWidth > 0 {
-                    // Match the fill radius to the available width so we don't draw outside the tile when dragging starts.
-                    RoundedRectangle(cornerRadius: fillCornerRadius, style: .continuous)
-                        .fill(model.accentColor.opacity(fillOpacity))
-                        .frame(width: fillWidth)
-                }
+                // Always render the fill rectangle; width animation is driven explicitly by the spring.
+                RoundedRectangle(cornerRadius: fillCornerRadius, style: .continuous)
+                    .fill(model.accentColor.opacity(fillOpacity))
+                    .frame(width: max(0, fillWidth))
+                    .transition(.identity)
 
                 HStack(spacing: DesignTokens.Spacing.md) {
                     Text(model.icon)
                         .font(.system(size: 26))
                         .frame(width: 44, height: 44)
-                        .background(iconBackground)
+                        .background(model.accentColor.opacity(0.2))
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .animation(nil, value: isDragging)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(model.title)
@@ -770,14 +769,17 @@ struct HabitTile: View {
                         .lineLimit(1)
                 }
                 .padding(.horizontal, DesignTokens.Spacing.md)
+                .animation(nil, value: displayProgress)
             }
             .frame(height: tileHeight)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(model.accentColor.opacity(isDragging ? 0.22 : 0.14), lineWidth: 1)
+                    .animation(nil, value: isDragging)
             )
             .shadow(color: Color.black.opacity(isDragging ? 0.08 : 0.05), radius: isDragging ? 10 : 8, y: isDragging ? 6 : 4)
+            .animation(nil, value: isDragging)
             .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .simultaneousGesture(dragGesture(totalWidth: width))
         }
@@ -812,8 +814,10 @@ struct HabitTile: View {
                     guard horizontalMagnitude > verticalMagnitude, horizontalMagnitude > 6 else {
                         return
                     }
-                    isDragging = true
-                    onDragStateChange(true)
+                    withTransaction(Transaction(animation: nil)) {
+                        isDragging = true
+                        onDragStateChange(true)
+                    }
                     dragStartProgress = progress
                     hasCelebratedCompletion = progress >= model.goal - 0.0001
                     lastPreviewQuantized = quantize(progress)
@@ -824,7 +828,17 @@ struct HabitTile: View {
 
                 let deltaRatio = Double(value.translation.width / max(totalWidth, 1))
                 let target = dragStartProgress + (deltaRatio * model.goal)
-                previewProgress(with: target)
+                let clamped = max(0, min(model.goal, target))
+                withAnimation(Self.dragFollowAnimation) {
+                    displayProgress += (clamped - displayProgress) * Self.dragBlendFactor
+                }
+
+                let quantized = quantize(clamped)
+                if abs(quantized - lastPreviewQuantized) > 0.0001 {
+                    emitStepHaptic(from: lastPreviewQuantized, to: quantized)
+                    lastPreviewQuantized = quantized
+                }
+                handleCompletionState(for: clamped)
             }
             .onEnded { value in
                 guard isDragging else { return }
@@ -861,24 +875,14 @@ struct HabitTile: View {
                     commitProgress(to: target)
                 }
 
-                isDragging = false
-                onDragStateChange(false)
+                withTransaction(Transaction(animation: nil)) {
+                    isDragging = false
+                    onDragStateChange(false)
+                }
             }
     }
 
-    private func previewProgress(with target: Double) {
-        let clamped = max(0, min(model.goal, target))
-        withAnimation(Self.dragFollowAnimation) {
-            displayProgress += (clamped - displayProgress) * Self.dragBlendFactor
-        }
-
-        let quantized = quantize(clamped)
-        if abs(quantized - lastPreviewQuantized) > 0.0001 {
-            emitStepHaptic(from: lastPreviewQuantized, to: quantized)
-            lastPreviewQuantized = quantized
-        }
-        handleCompletionState(for: clamped)
-    }
+    private func previewProgress(with target: Double) {}
 
     private func commitProgress(to target: Double) {
         let clampedRaw = max(0, min(model.goal, target))
