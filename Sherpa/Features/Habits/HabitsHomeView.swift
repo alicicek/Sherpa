@@ -729,7 +729,7 @@ struct HabitTile: View {
             let fillCornerRadius = min(cornerRadius, fillWidth / 2)
 
             let isComplete = displayRatio >= 1 - 0.0001
-            let fillOpacity = isComplete ? 0.48 : 0.32
+            let fillOpacity: Double = isComplete ? 0.5 : 0.42
 
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
