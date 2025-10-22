@@ -66,6 +66,14 @@ Document TODOs that should happen during the Swift 6 upgrade sprint:
 - Turn the lint/format rule set and CI workflow back on.
 - Add security reviews for Supabase/auth flows and implement automated tests around critical async paths.
 
+## 11. Working a UI Issue Without Going in Circles
+- **Start with instrumentation.** Before changing code, write down which state drives the visual effect (e.g. opacity, transitions, gesture flags) and log or inspect those values while reproducing the bug.
+- **Check for implicit animations.** In SwiftUI, any state change inside an active animation transaction will animate all dependent modifiers. Use `Transaction(animation: nil)` or `.animation(nil, value:)` to freeze cosmetic layers. Keep views in the hierarchy and animate only the property that should move.
+- **Avoid conditional rendering during animation.** If a view depends on an animated value (`if fillWidth > 0`), SwiftUI may treat insert/removal as a fade. Prefer always-on views whose size/opacity is controlled explicitly.
+- **Isolate and reproduce.** Build a minimal snippet (separate file or preview) that shows the problem. It clarifies the root cause and prevents incidental regressions.
+- **Review assumptions with the team/agent.** Summarise what changed, what still fails, and which hypotheses were disproven. Escalate to docs/Context7/Stack Overflow when the mental model is unclear—don’t stack speculative patches.
+- **Document the fix.** When the underlying pattern is tricky (like the habit tile drag), add comments or playbook notes so we don’t reintroduce the same issue later.
+
 ---
 
 ### Quick Checklist (per task)
