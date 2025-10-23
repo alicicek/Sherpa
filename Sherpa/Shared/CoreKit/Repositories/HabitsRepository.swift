@@ -20,6 +20,7 @@ protocol HabitsRepository {
 struct SwiftDataHabitsRepository: HabitsRepository {
     private let context: ModelContext
 
+    // TODO: Split storage implementation into its own type post-MVP so persistence can be swapped without touching this file.
     init(context: ModelContext) {
         self.context = context
     }
