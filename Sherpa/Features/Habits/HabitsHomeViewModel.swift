@@ -34,16 +34,32 @@ final class HabitsHomeViewModel: ObservableObject {
     private let calendarSpan: Int = 14
     private var habitTileProfiles: [PersistentIdentifier: HabitTileProfile] = [:]
     private var modelContext: ModelContext?
+    private var repo: HabitsRepository?
 
-    init() {
+    init(context: ModelContext? = nil, repo: HabitsRepository? = nil) {
         let now = Date().startOfDay
         self.selectedDate = now
         self.calendarWindowStart = now.adding(days: -calendarSpan)
+        self.modelContext = context
+        if let repo {
+            self.repo = repo
+        } else if let context {
+            self.repo = SwiftDataHabitsRepository(context: context)
+        }
     }
 
-    func configureIfNeeded(modelContext: ModelContext) {
-        guard self.modelContext == nil else { return }
-        self.modelContext = modelContext
+    func configureIfNeeded(modelContext: ModelContext, repo: HabitsRepository? = nil) {
+        if self.modelContext == nil {
+            self.modelContext = modelContext
+        }
+
+        if self.repo == nil {
+            if let repo {
+                self.repo = repo
+            } else {
+                self.repo = SwiftDataHabitsRepository(context: modelContext)
+            }
+        }
     }
 
     var calendarDates: [Date] {
@@ -366,7 +382,29 @@ final class HabitsHomeViewModel: ObservableObject {
 
     func saveProgress(for instance: HabitInstance, progress: Double, profile: HabitTileProfile) {
         let percent = profile.goal > 0 ? Int((progress / profile.goal) * 100) : 0
-        Logger.habits.debug("Progress persisted for habit instance with goal: \(profile.goal, privacy: .public), progress: \(progress, privacy: .public), percent: \(percent, privacy: .public)")
+        Logger.habits.debug(
+            "Saved progress for \(instance.displayName, privacy: .private): \(Int(progress), privacy: .public)/\(Int(profile.goal), privacy: .public) \(profile.unit, privacy: .private) (\(percent, privacy: .public)% done)"
+        )
+        saveProgress(for: instance, value: progress, goal: profile.goal, unit: profile.unit)
+    }
+
+    func saveProgress(for instance: HabitInstance, value: Double, goal: Double, unit: String) {
+        _Concurrency.Task { @MainActor [weak self] in
+            guard let self else { return }
+            guard let repository = self.resolveRepository(using: self.modelContext) else { return }
+            try? await repository.saveProgress(for: instance, value: value, goal: goal, unit: unit)
+        }
+    }
+
+    private func resolveRepository(using context: ModelContext?) -> HabitsRepository? {
+        if let repo {
+            return repo
+        }
+
+        guard let context else { return nil }
+        let repository = SwiftDataHabitsRepository(context: context)
+        repo = repository
+        return repository
     }
 }
 

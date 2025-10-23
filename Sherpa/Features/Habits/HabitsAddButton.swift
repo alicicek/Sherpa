@@ -11,9 +11,8 @@ struct AddHabitsButton: View {
     let action: () -> Void
 
     var body: some View {
-        let title = L10n.string("habits.addButton.title").uppercased()
         Button(action: action) {
-            Text(title)
+            Text(L10n.addHabitsTitle)
                 .font(.system(.headline, design: .rounded).weight(.bold))
                 .foregroundStyle(Color.white)
                 .kerning(1.1)

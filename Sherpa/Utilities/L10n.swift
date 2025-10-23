@@ -15,4 +15,8 @@ enum L10n {
         }
         return String(format: value, locale: Locale.current, arguments: arguments)
     }
+
+    static var addHabitsTitle: String {
+        string("habits.addButton.title")
+    }
 }

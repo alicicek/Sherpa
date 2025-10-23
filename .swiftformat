@@ -1,4 +1,12 @@
---swiftversion 5.10
---enable trailingclosures,redundantSelf,wrapArguments
---disable wrapCollections
---ifdef noindent
+--swiftversion 6.0
+--indent 4
+--maxwidth 140
+--self remove
+--wraparguments before-first
+--wrapcollections before-first
+--stripunusedargs closure-only
+--stripunusedimports enabled
+--groupimport enabled
+--commas inline
+--hexgrouping none
+--ifdef no-indent

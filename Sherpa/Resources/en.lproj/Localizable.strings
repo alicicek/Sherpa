@@ -13,7 +13,7 @@
 /* Habits */
 "habits.emptyState.message" = "All goals completed today, tap below to create new goal";
 "habits.addButton.label" = "Add a new habit";
-"habits.addButton.title" = "Add Habits";
+"habits.addButton.title" = "ADD HABITS";
 "habits.context.reset" = "Reset progress";
 "habits.context.skip" = "Skip today";
 "habits.context.skipWithNote" = "Skip with note";

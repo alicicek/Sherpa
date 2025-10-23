@@ -136,9 +136,13 @@ struct HabitTile: View {
         }
         .frame(height: tileHeight)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(model.title))
-        .accessibilityValue(Text(accessibilityValueText(for: progress)))
+        .accessibilityLabel(model.title)
+        .accessibilityValue(progressText)
         .accessibilityHint(Text(L10n.string("habits.tile.accessibility.hint")))
+        .accessibilityAdjustableAction { direction in
+            let delta = direction == .increment ? model.step : -model.step
+            commitProgress(to: progress + delta)
+        }
         .onAppear {
             displayProgress = progress
             handleCompletionState(for: progress)
@@ -333,13 +337,4 @@ struct HabitTile: View {
         formatter.roundingMode = .down
         return formatter
     }()
-
-    private func accessibilityValueText(for value: Double) -> String {
-        let current = HabitTile.numberFormatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-        let goal = HabitTile.numberFormatter.string(from: NSNumber(value: model.goal)) ?? "\(Int(model.goal))"
-        if model.unit.isEmpty {
-            return "\(current) of \(goal)"
-        }
-        return "\(current) of \(goal) \(model.unit)"
-    }
 }
