@@ -1,0 +1,4 @@
+# Configure SwiftGen here when localisation/assets generation is enabled.
+templates:
+  paths: []
+targets: {}

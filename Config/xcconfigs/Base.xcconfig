@@ -1,0 +1,10 @@
+// Shared build settings for the Sherpa targets.
+PRODUCT_BUNDLE_IDENTIFIER = com.sherpadaily.sherpa
+INFOPLIST_FILE = Config/Info.plist
+GENERATE_INFOPLIST_FILE = NO
+SWIFT_VERSION = 5.9
+LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks
+OTHER_SWIFT_FLAGS = $(inherited)
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM =
+PRODUCT_NAME = Sherpa

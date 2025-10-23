@@ -18,7 +18,7 @@ struct SherpaApp: App {
 
     @State private var modelContainer: ModelContainer?
     @State private var startupIssue: StartupIssue?
-    @StateObject private var xpStore = XPStore()
+    @StateObject private var appContainer = AppContainer()
 
     init() {
         let result = SherpaApp.makeModelContainer()
@@ -31,7 +31,8 @@ struct SherpaApp: App {
             if let container = modelContainer {
                 ContentView()
                     .modelContainer(container)
-                    .environmentObject(xpStore)
+                    .environmentObject(appContainer.xpStore)
+                    .environmentObject(appContainer)
             } else if let issue = startupIssue {
                 StartupFailureView(message: issue.message) {
                     rebuildModelContainer()

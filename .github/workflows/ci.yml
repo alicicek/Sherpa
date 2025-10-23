@@ -30,21 +30,22 @@ jobs:
           key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
           restore-keys: ${{ runner.os }}-spm-
 
-      - name: Lint (SwiftLint)
+      - name: Install Tooling
         run: |
-          brew install swiftlint || true
-          swiftlint --strict
+          brew install swiftlint swiftformat peripheryapp/periphery/periphery || true
 
-      - name: Format Check (SwiftFormat)
-        run: |
-          brew install swiftformat || true
-          swiftformat --lint .
+      - name: Lint
+        run: ./Scripts/lint.sh
+
+      - name: Format Check
+        run: ./Scripts/format.sh --lint
 
       - name: Build & Test (Simulator)
         run: |
           xcodebuild \
             -project Sherpa.xcodeproj \
             -scheme Sherpa \
+            -testPlan Config/Sherpa.xctestplan \
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -enableCodeCoverage YES \
@@ -53,5 +54,4 @@ jobs:
       - name: Periphery (dead code)
         if: ${{ always() }}
         run: |
-          brew install peripheryapp/periphery/periphery || true
-          periphery scan --config periphery.yml || true
+          ./Scripts/periphery.sh || true

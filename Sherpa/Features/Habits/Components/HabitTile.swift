@@ -338,3 +338,30 @@ struct HabitTile: View {
         return formatter
     }()
 }
+
+#Preview("Habit Tile") {
+    HabitTilePreview()
+}
+
+private struct HabitTilePreview: View {
+    @State private var progress: Double = 1350
+
+    private let model = HabitTileModel(
+        title: "Drink Water",
+        subtitle: "Hydration",
+        icon: "💧",
+        goal: 3000,
+        unit: "ml",
+        step: 250,
+        accentColor: Color(hex: "#28A6FF"),
+        backgroundColor: Color(hex: "#DFF1FF")
+    )
+
+    var body: some View {
+        HabitTile(model: model, progress: $progress) { newValue in
+            progress = newValue
+        }
+        .padding()
+        .background(Color.sherpaBackground)
+    }
+}

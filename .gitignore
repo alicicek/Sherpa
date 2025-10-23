@@ -2,10 +2,6 @@
 /DerivedData/
 /build/
 
-# Documentation
-IMPLEMENTATION-PLAN.MD
-PRD.MD
-
 # Xcode
 *.xcuserstate
 xcuserdata/
@@ -15,7 +11,6 @@ xcuserdata/
 # Swift Package Manager
 .swiftpm/
 Packages/
-Package.resolved
 
 # CocoaPods / Carthage (not used yet, but ignore by default)
 Pods/
@@ -35,6 +30,4 @@ fastlane/test_output/
 
 # Secrets / configs
 *.env
-*.xcconfig
 Secrets/
-

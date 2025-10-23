@@ -117,7 +117,9 @@ private struct TabPlaceholderView: View {
 }
 
 #Preview {
-    ContentView()
+    let container = AppContainer()
+    return ContentView()
         .modelContainer(for: [Habit.self, Task.self, HabitInstance.self, RecurrenceRule.self], inMemory: true)
-        .environmentObject(XPStore())
+        .environmentObject(container.xpStore)
+        .environmentObject(container)
 }
