@@ -175,12 +175,13 @@ final class HabitsHomeViewModel: ObservableObject {
         let start = center.adding(days: -calendarSpan)
         let end = center.adding(days: calendarSpan)
 
-        let descriptor = FetchDescriptor<HabitInstance>(
+        var descriptor = FetchDescriptor<HabitInstance>(
             predicate: #Predicate { instance in
                 instance.date >= start && instance.date <= end
             },
             sortBy: [SortDescriptor(\HabitInstance.date, order: .forward)]
         )
+        descriptor.fetchLimit = 200
 
         do {
             instances = try context.fetch(descriptor)

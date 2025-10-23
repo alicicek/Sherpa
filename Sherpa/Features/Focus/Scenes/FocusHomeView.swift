@@ -9,7 +9,7 @@ import Combine
 import SwiftUI
 
 struct FocusHomeView: View {
-    @StateObject private var viewModel = FocusTimerViewModel()
+    @StateObject private var viewModel: FocusTimerViewModel
     @EnvironmentObject private var xpStore: XPStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -19,6 +19,16 @@ struct FocusHomeView: View {
     @State private var celebrationDismissTask: _Concurrency.Task<Void, Never>? = nil
 
     private let focusXPReward = 25
+
+    @MainActor
+    init(viewModel: FocusTimerViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+
+    @MainActor
+    init() {
+        self.init(viewModel: FocusTimerViewModel())
+    }
 
     var body: some View {
         GeometryReader { proxy in

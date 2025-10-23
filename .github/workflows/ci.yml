@@ -46,7 +46,7 @@ jobs:
             -project Sherpa.xcodeproj \
             -scheme Sherpa \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -enableCodeCoverage YES \
             -quiet test
 

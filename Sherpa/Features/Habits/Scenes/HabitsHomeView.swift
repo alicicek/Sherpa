@@ -10,10 +10,20 @@ import SwiftUI
 
 struct HabitsHomeView: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel = HabitsHomeViewModel()
+    @StateObject private var viewModel: HabitsHomeViewModel
     @State private var showingAddSheet = false
     @State private var skipNoteTarget: HabitInstance?
     @State private var isAnyTileDragging = false
+
+    @MainActor
+    init(viewModel: HabitsHomeViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+
+    @MainActor
+    init() {
+        self.init(viewModel: HabitsHomeViewModel())
+    }
 
     var body: some View {
         NavigationStack {
