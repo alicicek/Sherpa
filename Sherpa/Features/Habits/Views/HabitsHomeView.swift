@@ -34,12 +34,19 @@ struct HabitsHomeView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: DesignTokens.Spacing.xl) {
-                        HabitsCalendarStrip(
-                            dates: viewModel.calendarDates,
-                            dayProgress: viewModel.dayCompletionSnapshots,
-                            selectedDate: $viewModel.selectedDate
-                        )
-                        .padding(.horizontal, -DesignTokens.Spacing.lg)
+                        VStack(spacing: DesignTokens.Spacing.xs) {
+                            HStack {
+                                Spacer()
+                                StreakCounterLabel(count: viewModel.currentStreakCount)
+                            }
+
+                            HabitsCalendarStrip(
+                                dates: viewModel.calendarDates,
+                                dayProgress: viewModel.dayCompletionSnapshots,
+                                selectedDate: $viewModel.selectedDate
+                            )
+                            .padding(.horizontal, -DesignTokens.Spacing.lg)
+                        }
 
                         HabitsHeroCard(
                             date: viewModel.selectedDate,
@@ -166,7 +173,9 @@ private struct HabitsHeroCard: View {
         .frame(height: 240)
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(leagueName) with \(xpValue) XP on \(date.formatted(date: .complete, time: .omitted))")
+        .accessibilityLabel(
+            "\(leagueName) with \(xpValue) XP on \(date.formatted(date: .complete, time: .omitted))"
+        )
     }
 }
 
@@ -188,5 +197,35 @@ private struct EmptyStateView: View {
                         style: StrokeStyle(lineWidth: 4, dash: [10, 6])
                     )
             )
+    }
+}
+
+private struct StreakCounterLabel: View {
+    let count: Int
+
+    var body: some View {
+        Text("🔥 \(count)")
+            .font(.system(size: 20, weight: .heavy, design: .rounded))
+            .foregroundStyle(Color.sherpaTextPrimary)
+            .padding(.horizontal, DesignTokens.Spacing.sm)
+            .padding(.vertical, DesignTokens.Spacing.xs)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(Color.white.opacity(0.9))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.06), radius: 6, y: 3)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(streakAccessibilityLabel)
+    }
+
+    private var streakAccessibilityLabel: String {
+        if count > 0 {
+            return L10n.string("habits.hero.streak.accessibility", count)
+        }
+        return L10n.string("habits.hero.streak.accessibility.zero")
     }
 }

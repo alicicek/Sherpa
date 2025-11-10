@@ -113,6 +113,23 @@ final class HabitsHomeViewModel: ObservableObject {
         }
     }
 
+    var currentStreakCount: Int {
+        var streak = 0
+        var cursor = Date().startOfDay
+        let calendar = Calendar.current
+
+        while true {
+            guard let snapshot = dayCompletionSnapshots[cursor] else { break }
+            guard snapshot.hasEligibleItems, snapshot.isComplete else { break }
+            streak += 1
+
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous.startOfDay
+        }
+
+        return streak
+    }
+
     var dayCompletionSnapshots: [Date: DayCompletionSnapshot] {
         let grouped = Dictionary(grouping: instances) { $0.date.startOfDay }
         var snapshots: [Date: DayCompletionSnapshot] = [:]

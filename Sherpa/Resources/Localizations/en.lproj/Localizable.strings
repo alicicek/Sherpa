@@ -18,6 +18,10 @@
 "habits.context.skip" = "Skip today";
 "habits.context.skipWithNote" = "Skip with note";
 "habits.tile.accessibility.hint" = "Swipe horizontally to adjust progress";
+"habits.hero.streak.badge" = "%d-day streak";
+"habits.hero.streak.badge.zero" = "Start your streak";
+"habits.hero.streak.accessibility" = "%d day streak";
+"habits.hero.streak.accessibility.zero" = "No active streak yet";
 
 /* Add routine */
 "addroutine.sheet.title.habit" = "New Habit";
