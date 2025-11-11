@@ -11,7 +11,7 @@ import OSLog
 struct HabitTileModel {
     let title: String
     let subtitle: String
-    let icon: String
+    let iconSystemName: String
     let goal: Double
     let unit: String
     let step: Double
@@ -89,12 +89,12 @@ struct HabitTile: View {
                     .transition(.identity)
 
                 HStack(spacing: DesignTokens.Spacing.md) {
-                    Text(model.icon)
-                        .font(.system(size: 26))
+                    Image(systemName: model.iconSystemName)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(model.accentColor)
                         .frame(width: 44, height: 44)
-                        .background(model.accentColor.opacity(0.2))
+                        .background(model.accentColor.opacity(0.15))
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        // Disable implicit animation so cosmetic hover states don't fight the drag spring.
                         .animation(nil, value: isDragging)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -349,7 +349,7 @@ private struct HabitTilePreview: View {
     private let model = HabitTileModel(
         title: "Drink Water",
         subtitle: "Hydration",
-        icon: "💧",
+        iconSystemName: "drop.fill",
         goal: 3000,
         unit: "ml",
         step: 250,

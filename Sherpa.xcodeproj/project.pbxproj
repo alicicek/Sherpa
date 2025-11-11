@@ -24,18 +24,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0B3744B3D33D4C249F93880F /* UITests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = UITests.xcconfig; path = Config/xcconfigs/UITests.xcconfig; sourceTree = "<group>"; };
+		221F697753D642568799B750 /* Project.Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Project.Staging.xcconfig; path = Config/xcconfigs/Project.Staging.xcconfig; sourceTree = "<group>"; };
+		284C4B773FA74314B7A33E6C /* Project.Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Project.Release.xcconfig; path = Config/xcconfigs/Project.Release.xcconfig; sourceTree = "<group>"; };
+		835B72B9F152412A86D068B8 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Base.xcconfig; path = Config/xcconfigs/Base.xcconfig; sourceTree = "<group>"; };
 		95B1F5402E9FDD5C00777560 /* Sherpa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sherpa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95B1F5522E9FDD5D00777560 /* SherpaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		95B1F55C2E9FDD5D00777560 /* SherpaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SherpaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		835B72B9F152412A86D068B8 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Base.xcconfig; path = Config/xcconfigs/Base.xcconfig; sourceTree = "<group>"; };
 		9CC6F77D5CA5421293A4CE78 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Staging.xcconfig; path = Config/xcconfigs/Staging.xcconfig; sourceTree = "<group>"; };
 		BA6F1624A5664F65AC8E9883 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Config/xcconfigs/Debug.xcconfig; sourceTree = "<group>"; };
-		EB07CD80E852463C8B05D09D /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Config/xcconfigs/Release.xcconfig; sourceTree = "<group>"; };
 		D58892C7A50C4DE08A4338CC /* Project.Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Project.Debug.xcconfig; path = Config/xcconfigs/Project.Debug.xcconfig; sourceTree = "<group>"; };
-		284C4B773FA74314B7A33E6C /* Project.Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Project.Release.xcconfig; path = Config/xcconfigs/Project.Release.xcconfig; sourceTree = "<group>"; };
-		221F697753D642568799B750 /* Project.Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Project.Staging.xcconfig; path = Config/xcconfigs/Project.Staging.xcconfig; sourceTree = "<group>"; };
 		E46BA0D402934E1BB297E1E4 /* Tests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Tests.xcconfig; path = Config/xcconfigs/Tests.xcconfig; sourceTree = "<group>"; };
-		0B3744B3D33D4C249F93880F /* UITests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = UITests.xcconfig; path = Config/xcconfigs/UITests.xcconfig; sourceTree = "<group>"; };
+		EB07CD80E852463C8B05D09D /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Config/xcconfigs/Release.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -96,19 +96,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-	95799C492EAA6715006823BE /* Recovered References */ = {
-		isa = PBXGroup;
-		children = (
-			835B72B9F152412A86D068B8 /* Base.xcconfig */,
-			BA6F1624A5664F65AC8E9883 /* Debug.xcconfig */,
-			EB07CD80E852463C8B05D09D /* Release.xcconfig */,
-			9CC6F77D5CA5421293A4CE78 /* Staging.xcconfig */,
-			D58892C7A50C4DE08A4338CC /* Project.Debug.xcconfig */,
-			284C4B773FA74314B7A33E6C /* Project.Release.xcconfig */,
-			221F697753D642568799B750 /* Project.Staging.xcconfig */,
-			E46BA0D402934E1BB297E1E4 /* Tests.xcconfig */,
-			0B3744B3D33D4C249F93880F /* UITests.xcconfig */,
-		);
+		95799C492EAA6715006823BE /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				835B72B9F152412A86D068B8 /* Base.xcconfig */,
+				BA6F1624A5664F65AC8E9883 /* Debug.xcconfig */,
+				EB07CD80E852463C8B05D09D /* Release.xcconfig */,
+				9CC6F77D5CA5421293A4CE78 /* Staging.xcconfig */,
+				D58892C7A50C4DE08A4338CC /* Project.Debug.xcconfig */,
+				284C4B773FA74314B7A33E6C /* Project.Release.xcconfig */,
+				221F697753D642568799B750 /* Project.Staging.xcconfig */,
+				E46BA0D402934E1BB297E1E4 /* Tests.xcconfig */,
+				0B3744B3D33D4C249F93880F /* UITests.xcconfig */,
+			);
 			name = "Recovered References";
 			sourceTree = "<group>";
 		};
@@ -340,25 +340,25 @@
 			};
 			name = Staging;
 		};
-	95799CE82EAA6716006823BE /* Staging */ = {
-		isa = XCBuildConfiguration;
-		baseConfigurationReference = E46BA0D402934E1BB297E1E4 /* Tests.xcconfig */;
-		buildSettings = {
+		95799CE82EAA6716006823BE /* Staging */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E46BA0D402934E1BB297E1E4 /* Tests.xcconfig */;
+			buildSettings = {
 				PRODUCT_NAME = SherpaTests;
 			};
 			name = Staging;
 		};
-	95799CE92EAA6716006823BE /* Staging */ = {
-		isa = XCBuildConfiguration;
-		baseConfigurationReference = 0B3744B3D33D4C249F93880F /* UITests.xcconfig */;
-		buildSettings = {
+		95799CE92EAA6716006823BE /* Staging */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0B3744B3D33D4C249F93880F /* UITests.xcconfig */;
+			buildSettings = {
 				PRODUCT_NAME = SherpaUITests;
 			};
 			name = Staging;
 		};
-        95B1F5642E9FDD5D00777560 /* Debug */ = {
-            isa = XCBuildConfiguration;
-            baseConfigurationReference = D58892C7A50C4DE08A4338CC /* Project.Debug.xcconfig */;
+		95B1F5642E9FDD5D00777560 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D58892C7A50C4DE08A4338CC /* Project.Debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -421,9 +421,9 @@
 			};
 			name = Debug;
 		};
-        95B1F5652E9FDD5D00777560 /* Release */ = {
-            isa = XCBuildConfiguration;
-            baseConfigurationReference = 284C4B773FA74314B7A33E6C /* Project.Release.xcconfig */;
+		95B1F5652E9FDD5D00777560 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 284C4B773FA74314B7A33E6C /* Project.Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -622,10 +622,10 @@
 			};
 			name = Release;
 		};
-	A3D8ECB3FC914E24821ECB3C /* Staging */ = {
-		isa = XCBuildConfiguration;
-		baseConfigurationReference = 221F697753D642568799B750 /* Project.Staging.xcconfig */;
-		buildSettings = {
+		A3D8ECB3FC914E24821ECB3C /* Staging */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 221F697753D642568799B750 /* Project.Staging.xcconfig */;
+			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
