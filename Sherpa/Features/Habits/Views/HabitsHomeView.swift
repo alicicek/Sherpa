@@ -94,7 +94,7 @@ struct HabitsHomeView: View {
                         }
                     }
                     .padding(.horizontal, DesignTokens.Spacing.lg)
-                    .padding(.vertical, DesignTokens.Spacing.xl)
+                    .padding(.bottom, DesignTokens.Spacing.xl)
                 }
                 .scrollDisabled(isAnyTileDragging)
             }
