@@ -31,7 +31,16 @@ struct HabitIconOption: Identifiable, Hashable {
 }
 
 enum HabitIconCatalog {
+    private static let baseDefaultIcon = HabitIconOption(
+        id: "plus",
+        systemName: "plus",
+        label: "Plus",
+        keywords: ["add", "create"],
+        category: .misc
+    )
+
     static let icons: [HabitIconOption] = [
+        baseDefaultIcon,
         HabitIconOption(id: "figure.walk", systemName: "figure.walk", label: "Walk", keywords: ["steps", "movement"], category: .health),
         HabitIconOption(id: "heart.fill", systemName: "heart.fill", label: "Heart", keywords: ["cardio", "health"], category: .health),
         HabitIconOption(id: "lungs.fill", systemName: "lungs.fill", label: "Breath", keywords: ["breath", "respire"], category: .health),
@@ -60,15 +69,7 @@ enum HabitIconCatalog {
         HabitIconOption(id: "hands.clap.fill", systemName: "hands.clap.fill", label: "Connect", keywords: ["friends"], category: .misc)
     ]
 
-    static var defaultIcon: HabitIconOption {
-        icons.first ?? HabitIconOption(
-            id: "sparkles",
-            systemName: "sparkles",
-            label: "Sparkles",
-            keywords: [],
-            category: .misc
-        )
-    }
+    static var defaultIcon: HabitIconOption { baseDefaultIcon }
 
     static func icon(for id: String) -> HabitIconOption? {
         icons.first { $0.id == id }

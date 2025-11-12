@@ -96,6 +96,7 @@ struct HabitsHomeView: View {
                     .padding(.horizontal, DesignTokens.Spacing.lg)
                     .padding(.bottom, DesignTokens.Spacing.xl)
                 }
+                .scrollBounceBehavior(.basedOnSize)
                 .scrollDisabled(isAnyTileDragging)
             }
             .task(id: viewModel.selectedDate) {

@@ -91,10 +91,16 @@ struct HabitTile: View {
                 HStack(spacing: DesignTokens.Spacing.md) {
                     Image(systemName: model.iconSystemName)
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(model.accentColor)
+                        .foregroundStyle(Color.white)
                         .frame(width: 44, height: 44)
-                        .background(model.accentColor.opacity(0.15))
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(model.accentColor.opacity(0.85))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                        )
                         .animation(nil, value: isDragging)
 
                     VStack(alignment: .leading, spacing: 4) {
