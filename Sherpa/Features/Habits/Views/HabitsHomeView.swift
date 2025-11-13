@@ -223,24 +223,20 @@ private struct StreakCounterLabel: View {
     private var flameIcon: some View {
         Image(systemName: "flame.fill")
             .font(.system(size: 26, weight: .regular, design: .rounded))
-            .foregroundStyle(flameFillColor)
-            .overlay(
-                Image(systemName: "flame")
-                    .font(.system(size: 26, weight: .regular, design: .rounded))
-                    .foregroundStyle(flameStrokeColor)
-            )
+            .symbolRenderingMode(isActive ? .palette : .monochrome)
+            .foregroundStyle(flameOuterColor, flameInnerColor)
     }
 
-    private var flameFillColor: Color {
-        isActive ? DesignTokens.Colors.primary : Color.sherpaTextSecondary.opacity(0.35)
+    private var flameOuterColor: Color {
+        isActive ? DesignTokens.Colors.accentOrange : Color.sherpaTextSecondary.opacity(0.35)
     }
 
-    private var flameStrokeColor: Color {
-        isActive ? Color.white.opacity(0.9) : Color.sherpaTextSecondary.opacity(0.2)
+    private var flameInnerColor: Color {
+        isActive ? DesignTokens.Colors.accentGold : Color.sherpaTextSecondary.opacity(0.2)
     }
 
     private var textColor: Color {
-        isActive ? DesignTokens.Colors.primary : Color.sherpaTextSecondary.opacity(0.7)
+        isActive ? DesignTokens.Colors.accentOrange : Color.sherpaTextSecondary.opacity(0.7)
     }
 
     private var streakAccessibilityLabel: String {
