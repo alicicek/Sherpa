@@ -35,6 +35,8 @@ final class HabitsHomeViewModel: ObservableObject {
     private var habitTileProfiles: [PersistentIdentifier: HabitTileProfile] = [:]
     private var modelContext: ModelContext?
     private var repo: HabitsRepository?
+    /// Most recent streak count earned on a completed day; prevents the badge from dropping at day boundaries.
+    private var lastQualifiedStreakCount: Int = 0
 
     init(context: ModelContext? = nil, repo: HabitsRepository? = nil) {
         let now = Date().startOfDay
@@ -114,12 +116,45 @@ final class HabitsHomeViewModel: ObservableObject {
     }
 
     var currentStreakCount: Int {
+        let calendar = Calendar.autoupdatingCurrent
+        let snapshots = dayCompletionSnapshots
+        let today = calendar.startOfDay(for: Date())
+
+        let displayAnchor = today
+
+        if calendar.isDate(displayAnchor, inSameDayAs: today),
+           shouldHoldPreviousStreak(for: displayAnchor, snapshots: snapshots) {
+            return fallbackStreakFromPreviousDay(using: calendar, snapshots: snapshots, anchor: displayAnchor)
+        }
+
+        let computed = Self.streakCount(
+            asOf: displayAnchor,
+            snapshots: snapshots,
+            calendar: calendar
+        )
+
+        guard let snapshot = snapshots[displayAnchor] else {
+            return max(computed, lastQualifiedStreakCount)
+        }
+
+        if snapshot.hasEligibleItems, snapshot.isComplete {
+            lastQualifiedStreakCount = max(lastQualifiedStreakCount, computed)
+        }
+
+        return computed
+    }
+
+    /// Computes the streak count as of the provided day so historical navigation keeps accurate totals.
+    nonisolated static func streakCount(
+        asOf anchorDate: Date,
+        snapshots: [Date: DayCompletionSnapshot],
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> Int {
         var streak = 0
-        var cursor = Date().startOfDay
-        let calendar = Calendar.current
+        var cursor = anchorDate.startOfDay
 
         while true {
-            guard let snapshot = dayCompletionSnapshots[cursor] else { break }
+            guard let snapshot = snapshots[cursor] else { break }
             guard snapshot.hasEligibleItems, snapshot.isComplete else { break }
             streak += 1
 
@@ -128,6 +163,60 @@ final class HabitsHomeViewModel: ObservableObject {
         }
 
         return streak
+    }
+
+    private func shouldHoldPreviousStreak(for date: Date, snapshots: [Date: DayCompletionSnapshot]) -> Bool {
+        guard let snapshot = snapshots[date] else { return true }
+        return snapshot.hasEligibleItems == false || snapshot.isComplete == false
+    }
+
+    private func fallbackStreakFromPreviousDay(
+        using calendar: Calendar,
+        snapshots: [Date: DayCompletionSnapshot],
+        anchor: Date
+    ) -> Int {
+        guard let previous = calendar.date(byAdding: .day, value: -1, to: anchor) else {
+            return lastQualifiedStreakCount
+        }
+
+        let previousStart = calendar.startOfDay(for: previous)
+        let yesterdayCount = Self.streakCount(
+            asOf: previousStart,
+            snapshots: snapshots,
+            calendar: calendar
+        )
+
+        if let snapshot = snapshots[previousStart], snapshot.hasEligibleItems, snapshot.isComplete {
+            lastQualifiedStreakCount = max(lastQualifiedStreakCount, yesterdayCount)
+        }
+
+        return max(yesterdayCount, lastQualifiedStreakCount)
+    }
+
+    private func refreshStreakCache() {
+        let calendar = Calendar.autoupdatingCurrent
+        let snapshots = dayCompletionSnapshots
+        let today = calendar.startOfDay(for: Date())
+
+        if let snapshot = snapshots[today], snapshot.hasEligibleItems, snapshot.isComplete {
+            lastQualifiedStreakCount = Self.streakCount(
+                asOf: today,
+                snapshots: snapshots,
+                calendar: calendar
+            )
+            return
+        }
+
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else { return }
+        let yesterdayStart = calendar.startOfDay(for: yesterday)
+        let yesterdayCount = Self.streakCount(
+            asOf: yesterdayStart,
+            snapshots: snapshots,
+            calendar: calendar
+        )
+        if yesterdayCount > 0 {
+            lastQualifiedStreakCount = max(lastQualifiedStreakCount, yesterdayCount)
+        }
     }
 
     var dayCompletionSnapshots: [Date: DayCompletionSnapshot] {
@@ -205,6 +294,8 @@ final class HabitsHomeViewModel: ObservableObject {
         } catch {
             Logger.habits.error("Failed to fetch habit instances: \(error.localizedDescription, privacy: .public)")
         }
+
+        refreshStreakCache()
     }
 
     func pruneProgressCache() {
