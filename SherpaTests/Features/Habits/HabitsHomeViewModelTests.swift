@@ -67,6 +67,13 @@ struct HabitsHomeViewModelTests {
 
         viewModel.selectedDate = yesterday
         #expect(viewModel.currentStreakCount == 2, "Past-day selection should continue to show the global streak")
+
+        pendingToday.status = .pending
+        try context.save()
+        viewModel.reloadInstances(centeredOn: today)
+
+        viewModel.selectedDate = today
+        #expect(viewModel.currentStreakCount == 1, "Undoing today's completion should fall back to yesterday's streak")
     }
 
     @MainActor
@@ -110,6 +117,34 @@ struct HabitsHomeViewModelTests {
             viewModel.currentStreakCount == 2,
             "Selecting future dates should not reset the active streak"
         )
+    }
+
+    @MainActor
+    @Test
+    func streakDropsWhenUndoingOnlyCompletedDay() throws {
+        let context = try makeInMemoryContext()
+        let today = Date().startOfDay
+
+        let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: today)
+        context.insert(rule)
+
+        let habit = Habit(title: "Read", recurrenceRule: rule)
+        context.insert(habit)
+
+        let instance = HabitInstance(date: today, status: .completed, habit: habit)
+        context.insert(instance)
+        try context.save()
+
+        let viewModel = HabitsHomeViewModel(context: context)
+        viewModel.reloadInstances(centeredOn: today)
+
+        #expect(viewModel.currentStreakCount == 1)
+
+        instance.status = .pending
+        try context.save()
+        viewModel.reloadInstances(centeredOn: today)
+
+        #expect(viewModel.currentStreakCount == 0)
     }
 
     @MainActor
