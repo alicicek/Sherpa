@@ -2,6 +2,7 @@ import Foundation
 
 /// Supported recurrence frequencies for habits/tasks.
 enum RecurrenceFrequency: String, Codable, CaseIterable, Identifiable {
+    case once
     case daily
     case weekly
     case monthly
@@ -10,10 +11,15 @@ enum RecurrenceFrequency: String, Codable, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
+        case .once: return "One time"
         case .daily: return "Daily"
         case .weekly: return "Weekly"
         case .monthly: return "Monthly"
         }
+    }
+
+    var isRepeating: Bool {
+        self != .once
     }
 }
 

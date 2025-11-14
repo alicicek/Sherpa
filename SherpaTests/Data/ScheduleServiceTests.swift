@@ -44,4 +44,50 @@ struct ScheduleServiceTests {
         let instancesAfterSecondPass = try context.fetch(descriptor)
         #expect(instancesAfterSecondPass.count == 1)
     }
+
+    @Test
+    @MainActor
+    func scheduleHonoursOccurrenceLimit() throws {
+        let context = try makeInMemoryContext()
+        let startDate = Date().startOfDay
+        let rule = RecurrenceRule(
+            frequency: .daily,
+            interval: 1,
+            startDate: startDate,
+            occurrenceLimit: 2
+        )
+        context.insert(rule)
+
+        let habit = Habit(title: "Hydrate", recurrenceRule: rule)
+        context.insert(habit)
+        try context.save()
+
+        let endDate = startDate.adding(days: 5)
+        try ScheduleService(context: context).ensureSchedule(from: startDate, to: endDate)
+
+        let descriptor = FetchDescriptor<HabitInstance>(predicate: #Predicate { $0.habit == habit })
+        let instances = try context.fetch(descriptor)
+        #expect(instances.count == 2)
+    }
+
+    @Test
+    @MainActor
+    func onceFrequencySchedulesSingleOccurrence() throws {
+        let context = try makeInMemoryContext()
+        let startDate = Date().startOfDay
+        let rule = RecurrenceRule(frequency: .once, interval: 1, startDate: startDate)
+        context.insert(rule)
+
+        let habit = Habit(title: "Doctor visit", recurrenceRule: rule)
+        context.insert(habit)
+        try context.save()
+
+        let endDate = startDate.adding(days: 7)
+        try ScheduleService(context: context).ensureSchedule(from: startDate, to: endDate)
+
+        let descriptor = FetchDescriptor<HabitInstance>(predicate: #Predicate { $0.habit == habit })
+        let instances = try context.fetch(descriptor)
+        #expect(instances.count == 1)
+        #expect(instances.first?.date == startDate)
+    }
 }

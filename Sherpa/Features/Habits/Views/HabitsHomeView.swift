@@ -94,8 +94,9 @@ struct HabitsHomeView: View {
                         }
                     }
                     .padding(.horizontal, DesignTokens.Spacing.lg)
-                    .padding(.vertical, DesignTokens.Spacing.xl)
+                    .padding(.bottom, DesignTokens.Spacing.xl)
                 }
+                .scrollBounceBehavior(.basedOnSize)
                 .scrollDisabled(isAnyTileDragging)
             }
             .task(id: viewModel.selectedDate) {
@@ -203,27 +204,43 @@ private struct EmptyStateView: View {
 private struct StreakCounterLabel: View {
     let count: Int
 
+    private var isActive: Bool { count > 0 }
+
     var body: some View {
-        Text("🔥 \(count)")
-            .font(.system(size: 20, weight: .heavy, design: .rounded))
-            .foregroundStyle(Color.sherpaTextPrimary)
-            .padding(.horizontal, DesignTokens.Spacing.sm)
-            .padding(.vertical, DesignTokens.Spacing.xs)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(Color.white.opacity(0.9))
-            )
-            .overlay(
-                Capsule(style: .continuous)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.06), radius: 6, y: 3)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(streakAccessibilityLabel)
+        HStack(spacing: DesignTokens.Spacing.xs) {
+            flameIcon
+            Text("\(count)")
+                .font(.system(size: 20, weight: .heavy, design: .rounded))
+                .foregroundStyle(textColor)
+        }
+        .padding(.horizontal, DesignTokens.Spacing.sm)
+        .padding(.vertical, DesignTokens.Spacing.xs)
+        .background(Color.clear)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(streakAccessibilityLabel)
+    }
+
+    private var flameIcon: some View {
+        Image(systemName: "flame.fill")
+            .font(.system(size: 26, weight: .regular, design: .rounded))
+            .symbolRenderingMode(isActive ? .palette : .monochrome)
+            .foregroundStyle(flameOuterColor, flameInnerColor)
+    }
+
+    private var flameOuterColor: Color {
+        isActive ? DesignTokens.Colors.accentOrange : Color.sherpaTextSecondary.opacity(0.35)
+    }
+
+    private var flameInnerColor: Color {
+        isActive ? DesignTokens.Colors.accentGold : Color.sherpaTextSecondary.opacity(0.2)
+    }
+
+    private var textColor: Color {
+        isActive ? DesignTokens.Colors.accentOrange : Color.sherpaTextSecondary.opacity(0.7)
     }
 
     private var streakAccessibilityLabel: String {
-        if count > 0 {
+        if isActive {
             return L10n.string("habits.hero.streak.accessibility", count)
         }
         return L10n.string("habits.hero.streak.accessibility.zero")

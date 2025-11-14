@@ -19,7 +19,7 @@ struct HabitTileProfile {
     let step: Double
     let unit: String
     let subtitle: String
-    let icon: String
+    let iconSystemName: String
     let accent: Color
     let background: Color
 }
@@ -35,6 +35,8 @@ final class HabitsHomeViewModel: ObservableObject {
     private var habitTileProfiles: [PersistentIdentifier: HabitTileProfile] = [:]
     private var modelContext: ModelContext?
     private var repo: HabitsRepository?
+    /// Most recent streak count earned on a completed day; prevents the badge from dropping at day boundaries.
+    private var lastQualifiedStreakCount: Int = 0
 
     init(context: ModelContext? = nil, repo: HabitsRepository? = nil) {
         let now = Date().startOfDay
@@ -114,12 +116,38 @@ final class HabitsHomeViewModel: ObservableObject {
     }
 
     var currentStreakCount: Int {
+        let calendar = Calendar.autoupdatingCurrent
+        let snapshots = dayCompletionSnapshots
+        let today = calendar.startOfDay(for: Date())
+
+        if let anchor = mostRecentCompletedDay(upTo: today, snapshots: snapshots, calendar: calendar) {
+            let computed = Self.streakCount(
+                asOf: anchor,
+                snapshots: snapshots,
+                calendar: calendar
+            )
+            lastQualifiedStreakCount = computed
+            return computed
+        }
+
+        if let snapshot = snapshots[today], snapshot.hasEligibleItems {
+            return lastQualifiedStreakCount
+        }
+
+        return lastQualifiedStreakCount
+    }
+
+    /// Computes the streak count as of the provided day so historical navigation keeps accurate totals.
+    nonisolated static func streakCount(
+        asOf anchorDate: Date,
+        snapshots: [Date: DayCompletionSnapshot],
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> Int {
         var streak = 0
-        var cursor = Date().startOfDay
-        let calendar = Calendar.current
+        var cursor = anchorDate.startOfDay
 
         while true {
-            guard let snapshot = dayCompletionSnapshots[cursor] else { break }
+            guard let snapshot = snapshots[cursor] else { break }
             guard snapshot.hasEligibleItems, snapshot.isComplete else { break }
             streak += 1
 
@@ -128,6 +156,54 @@ final class HabitsHomeViewModel: ObservableObject {
         }
 
         return streak
+    }
+
+    private func mostRecentCompletedDay(
+        upTo limit: Date,
+        snapshots: [Date: DayCompletionSnapshot],
+        calendar: Calendar
+    ) -> Date? {
+        var cursor = limit
+        let maxSteps = (calendarSpan * 2) + 14
+
+        for _ in 0..<maxSteps {
+            guard let snapshot = snapshots[cursor] else { break }
+            let isEvaluatingToday = calendar.isDate(cursor, inSameDayAs: limit)
+
+            if snapshot.hasEligibleItems == false {
+                guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+                cursor = previous.startOfDay
+                continue
+            }
+
+            if snapshot.isComplete {
+                return cursor
+            }
+
+            if isEvaluatingToday {
+                guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+                cursor = previous.startOfDay
+                continue
+            }
+
+            break
+        }
+
+        return nil
+    }
+
+    private func refreshStreakCache() {
+        let calendar = Calendar.autoupdatingCurrent
+        let snapshots = dayCompletionSnapshots
+        let today = calendar.startOfDay(for: Date())
+
+        if let anchor = mostRecentCompletedDay(upTo: today, snapshots: snapshots, calendar: calendar) {
+            lastQualifiedStreakCount = Self.streakCount(
+                asOf: anchor,
+                snapshots: snapshots,
+                calendar: calendar
+            )
+        }
     }
 
     var dayCompletionSnapshots: [Date: DayCompletionSnapshot] {
@@ -205,6 +281,8 @@ final class HabitsHomeViewModel: ObservableObject {
         } catch {
             Logger.habits.error("Failed to fetch habit instances: \(error.localizedDescription, privacy: .public)")
         }
+
+        refreshStreakCache()
     }
 
     func pruneProgressCache() {
@@ -268,35 +346,49 @@ final class HabitsHomeViewModel: ObservableObject {
         let colorIndex = stableColorIndex(for: instance)
         let palettes = DesignTokens.cardPalettes
         let palette = palettes.isEmpty ? [DesignTokens.Colors.primary] : palettes[colorIndex % palettes.count]
-        let accent = palette.first ?? DesignTokens.Colors.primary
-        let background = (palette.dropFirst().first ?? accent).opacity(0.18)
+        var accent = palette.first ?? DesignTokens.Colors.primary
+        var background = (palette.dropFirst().first ?? accent).opacity(0.18)
 
         var goal: Double = instance.isHabit ? 4 : 1
         var unit: String = instance.isHabit ? "reps" : "tasks"
-        var subtitle: String = instance.isHabit ? "Every day" : "Task"
-        var icon: String = instance.isHabit ? "🧗" : "📝"
+        var subtitle: String = instance.isHabit ? "Daily target" : "Task"
+        var iconName: String = instance.isHabit ? "flame.fill" : "checkmark.circle.fill"
 
-        let lowercasedName = instance.displayName.lowercased()
-        if lowercasedName.contains("water") {
-            goal = 3000
-            unit = "ml"
-            icon = "💧"
-            subtitle = "Hydration"
-        } else if lowercasedName.contains("protein") {
-            goal = 400
-            unit = "g"
-            icon = "🍗"
-            subtitle = "Nutrition"
-        } else if lowercasedName.contains("walk") || lowercasedName.contains("steps") {
-            goal = 8000
-            unit = "steps"
-            icon = "🚶"
-            subtitle = "Movement"
-        } else if lowercasedName.contains("meditat") {
-            goal = 20
-            unit = "min"
-            icon = "🧘"
-            subtitle = "Mindfulness"
+        if let habit = instance.habit {
+            let targetUnit = habit.targetUnit
+            goal = max(1, habit.targetValue)
+            unit = targetUnit.shortLabel
+            subtitle = HabitTargetUnitFormatter.display(for: goal, unit: targetUnit)
+            iconName = habit.iconSymbolName.isEmpty ? "flame.fill" : habit.iconSymbolName
+
+            if let hex = habit.colorHex {
+                let customColor = Color(hex: hex)
+                accent = customColor
+                background = customColor.opacity(0.18)
+            }
+        } else {
+            let lowercasedName = instance.displayName.lowercased()
+            if lowercasedName.contains("water") {
+                goal = 3000
+                unit = "ml"
+                iconName = "drop.fill"
+                subtitle = "Hydration"
+            } else if lowercasedName.contains("protein") {
+                goal = 400
+                unit = "g"
+                iconName = "fork.knife"
+                subtitle = "Nutrition"
+            } else if lowercasedName.contains("walk") || lowercasedName.contains("steps") {
+                goal = 8000
+                unit = "steps"
+                iconName = "figure.walk"
+                subtitle = "Movement"
+            } else if lowercasedName.contains("meditat") {
+                goal = 20
+                unit = "min"
+                iconName = "brain.head.profile"
+                subtitle = "Mindfulness"
+            }
         }
 
         let step = AdaptiveStepCalculator.stepSize(for: goal)
@@ -306,7 +398,7 @@ final class HabitsHomeViewModel: ObservableObject {
             step: step,
             unit: unit,
             subtitle: subtitle,
-            icon: icon,
+            iconSystemName: iconName,
             accent: accent,
             background: background
         )
@@ -319,7 +411,7 @@ final class HabitsHomeViewModel: ObservableObject {
         HabitTileModel(
             title: instance.displayName,
             subtitle: profile.subtitle,
-            icon: profile.icon,
+            iconSystemName: profile.iconSystemName,
             goal: profile.goal,
             unit: profile.unit,
             step: profile.step,
@@ -393,6 +485,8 @@ final class HabitsHomeViewModel: ObservableObject {
         instance.completedAt = status == .completed ? Date() : nil
         do {
             try context.save()
+            instances = Array(instances)
+            refreshStreakCache()
         } catch {
             Logger.habits.error("Failed to update habit instance: \(error.localizedDescription, privacy: .public)")
         }
