@@ -131,8 +131,7 @@ final class HabitsHomeViewModel: ObservableObject {
         }
 
         if let snapshot = snapshots[today], snapshot.hasEligibleItems {
-            lastQualifiedStreakCount = 0
-            return 0
+            return lastQualifiedStreakCount
         }
 
         return lastQualifiedStreakCount
@@ -169,11 +168,25 @@ final class HabitsHomeViewModel: ObservableObject {
 
         for _ in 0..<maxSteps {
             guard let snapshot = snapshots[cursor] else { break }
-            if snapshot.hasEligibleItems, snapshot.isComplete {
+            let isEvaluatingToday = calendar.isDate(cursor, inSameDayAs: limit)
+
+            if snapshot.hasEligibleItems == false {
+                guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+                cursor = previous.startOfDay
+                continue
+            }
+
+            if snapshot.isComplete {
                 return cursor
             }
-            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
-            cursor = previous.startOfDay
+
+            if isEvaluatingToday {
+                guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+                cursor = previous.startOfDay
+                continue
+            }
+
+            break
         }
 
         return nil
@@ -190,8 +203,6 @@ final class HabitsHomeViewModel: ObservableObject {
                 snapshots: snapshots,
                 calendar: calendar
             )
-        } else if let snapshot = snapshots[today], snapshot.hasEligibleItems {
-            lastQualifiedStreakCount = 0
         }
     }
 

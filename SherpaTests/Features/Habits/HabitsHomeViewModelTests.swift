@@ -124,27 +124,104 @@ struct HabitsHomeViewModelTests {
     func streakDropsWhenUndoingOnlyCompletedDay() throws {
         let context = try makeInMemoryContext()
         let today = Date().startOfDay
+        guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)?.startOfDay else {
+            #expect(false, "Failed to derive previous day for test")
+            return
+        }
 
-        let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: today)
+        let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: yesterday)
         context.insert(rule)
 
         let habit = Habit(title: "Read", recurrenceRule: rule)
         context.insert(habit)
 
-        let instance = HabitInstance(date: today, status: .completed, habit: habit)
-        context.insert(instance)
+        let completedYesterday = HabitInstance(date: yesterday, status: .completed, habit: habit)
+        let todayInstance = HabitInstance(date: today, status: .completed, habit: habit)
+        context.insert(completedYesterday)
+        context.insert(todayInstance)
         try context.save()
 
         let viewModel = HabitsHomeViewModel(context: context)
         viewModel.reloadInstances(centeredOn: today)
 
+        #expect(viewModel.currentStreakCount == 2)
+
+        todayInstance.status = .pending
+        try context.save()
+        viewModel.reloadInstances(centeredOn: today)
+
         #expect(viewModel.currentStreakCount == 1)
 
-        instance.status = .pending
+        completedYesterday.status = .pending
         try context.save()
         viewModel.reloadInstances(centeredOn: today)
 
         #expect(viewModel.currentStreakCount == 0)
+    }
+
+    @MainActor
+    @Test
+    func streakHoldsThroughRestartWhileTodayIncomplete() throws {
+        let context = try makeInMemoryContext()
+        let calendar = Calendar.current
+        let today = Date().startOfDay
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today)?.startOfDay else {
+            #expect(false, "Failed to derive previous day for test")
+            return
+        }
+
+        let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: yesterday)
+        context.insert(rule)
+
+        let habit = Habit(title: "Read", recurrenceRule: rule)
+        context.insert(habit)
+
+        let completedYesterday = HabitInstance(date: yesterday, status: .completed, habit: habit)
+        let todayInstance = HabitInstance(date: today, status: .pending, habit: habit)
+        context.insert(completedYesterday)
+        context.insert(todayInstance)
+        try context.save()
+
+        var viewModel = HabitsHomeViewModel(context: context)
+        viewModel.reloadInstances(centeredOn: today)
+        #expect(viewModel.currentStreakCount == 1)
+
+        // Simulate restart/new session by creating a fresh view-model instance.
+        viewModel = HabitsHomeViewModel(context: context)
+        viewModel.reloadInstances(centeredOn: today)
+        #expect(viewModel.currentStreakCount == 1)
+    }
+
+    @MainActor
+    @Test
+    func streakResetsAfterMissedDay() throws {
+        let context = try makeInMemoryContext()
+        let calendar = Calendar.current
+        let today = Date().startOfDay
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today)?.startOfDay,
+              let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: today)?.startOfDay else {
+            #expect(false, "Failed to derive prior dates for test")
+            return
+        }
+
+        let rule = RecurrenceRule(frequency: .daily, interval: 1, startDate: twoDaysAgo)
+        context.insert(rule)
+
+        let habit = Habit(title: "Read", recurrenceRule: rule)
+        context.insert(habit)
+
+        let completedTwoDaysAgo = HabitInstance(date: twoDaysAgo, status: .completed, habit: habit)
+        let missedYesterday = HabitInstance(date: yesterday, status: .pending, habit: habit)
+        let todayInstance = HabitInstance(date: today, status: .pending, habit: habit)
+        context.insert(completedTwoDaysAgo)
+        context.insert(missedYesterday)
+        context.insert(todayInstance)
+        try context.save()
+
+        let viewModel = HabitsHomeViewModel(context: context)
+        viewModel.reloadInstances(centeredOn: today)
+
+        #expect(viewModel.currentStreakCount == 0, "Missed days should reset the streak")
     }
 
     @MainActor

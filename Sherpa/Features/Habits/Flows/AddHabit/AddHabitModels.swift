@@ -86,7 +86,7 @@ struct HabitRepeatConfiguration: Equatable {
     var end: HabitRepeatEnd
 
     static func `default`() -> HabitRepeatConfiguration {
-        HabitRepeatConfiguration(pattern: .none, end: .never)
+        HabitRepeatConfiguration(pattern: .daily(interval: 1), end: .never)
     }
 
     func summary(startDate: Date) -> String {
